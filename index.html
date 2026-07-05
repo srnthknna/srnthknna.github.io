@@ -1,5 +1,631 @@
-<div>
-<h1> Srinath Kanna Dhandapani </h1>
-<h2>Software Development Engineer </h2> 
-<img width="200" height="200" src="https://www.doorwaysva.org/wp-content/uploads/2019/06/amazon-logo.png" />
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Srinath Kanna Dhandapani — Resume</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FAFAF9;
+    --ink: #17191C;
+    --muted: #6B7280;
+    --rule: #E3E4E0;
+    --accent: #2F6F4E;
+    --accent-soft: #E4EFE8;
+    --card-hover: #F1F1EF;
+    --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color-scheme: light;
+  }
+
+  html[data-theme="dark"] {
+    --paper: #14171B;
+    --ink: #ECEDEE;
+    --muted: #98A0AC;
+    --rule: #2A2F36;
+    --accent: #4FCB8F;
+    --accent-soft: rgba(79, 203, 143, 0.14);
+    --card-hover: #1B1F25;
+    color-scheme: dark;
+  }
+
+  /* Company brand accents (work in both themes) */
+  [data-company="meta"]       { --company: #2E7CF6; --company-text: #fff; }
+  [data-company="atlassian"]  { --company: #4C6FFF; --company-text: #fff; }
+  [data-company="amazon"]     { --company: #FF9900; --company-text: #17191C; }
+
+  * { box-sizing: border-box; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+  }
+
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.35s ease, color 0.35s ease;
+  }
+
+  .page {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 56px 40px 80px;
+    position: relative;
+  }
+
+  /* ---------- Theme toggle ---------- */
+  .theme-toggle {
+    position: fixed;
+    top: 22px;
+    right: 22px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 20;
+    transition: transform 0.25s ease, background-color 0.25s ease, border-color 0.25s ease;
+  }
+  .theme-toggle:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .theme-toggle svg { width: 18px; height: 18px; }
+  .theme-toggle .sun { display: none; }
+  html[data-theme="dark"] .theme-toggle .moon { display: none; }
+  html[data-theme="dark"] .theme-toggle .sun { display: block; }
+
+  /* ---------- Reveal-on-scroll ---------- */
+  .reveal {
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .reveal.in-view { opacity: 1; transform: translateY(0); }
+
+  header.identity {
+    text-align: center;
+    margin-bottom: 34px;
+    animation: rise 0.6s ease both;
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  h1.name {
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 26px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin: 0 0 10px;
+    color: var(--ink);
+  }
+
+  .contact { font-size: 13.5px; color: var(--muted); font-family: var(--sans); }
+  .contact a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s ease; }
+  .contact a:hover, .contact a:focus-visible { border-bottom-color: var(--accent); }
+  .sep { color: var(--rule); margin: 0 8px; }
+
+  section { margin-bottom: 30px; }
+
+  h2.section-label {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+    margin: 0 0 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--rule);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  h2.section-label .label-text { display: flex; align-items: center; gap: 8px; }
+  h2.section-label .label-text::before { content: "//"; color: var(--accent); font-weight: 600; }
+
+  .toggle-all {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-transform: none;
+    color: var(--accent);
+    background: none;
+    border: 1px solid var(--rule);
+    border-radius: 20px;
+    padding: 4px 12px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+  }
+  .toggle-all:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .toggle-all:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .summary p { margin: 0; font-size: 15px; color: var(--ink); }
+
+  .skills-row {
+    display: grid;
+    grid-template-columns: 190px 1fr;
+    gap: 6px 14px;
+    font-size: 14.5px;
+  }
+  .skills-row dt { font-family: var(--mono); font-weight: 600; color: var(--ink); }
+  .skills-row dd { margin: 0; color: var(--ink); }
+
+  /* ---------- Work history timeline ---------- */
+  .timeline {
+    position: relative;
+    margin-left: 6px;
+    padding-left: 26px;
+  }
+  .timeline::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--rule);
+    transform: scaleY(0);
+    transform-origin: top;
+    transition: transform 1s ease;
+  }
+  .timeline.in-view::before { transform: scaleY(1); }
+
+  .entry {
+    position: relative;
+    padding-bottom: 18px;
+  }
+  .entry:last-child { padding-bottom: 4px; }
+
+  .entry::before {
+    content: "";
+    position: absolute;
+    left: -33px;
+    top: 9px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--paper);
+    border: 2px solid var(--muted);
+    z-index: 2;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+  }
+  .entry.current::before {
+    border-color: var(--accent);
+    background: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-soft);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .entry.current::before { animation: pulse 2.2s ease-in-out infinite; }
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 4px var(--accent-soft); }
+    50%      { box-shadow: 0 0 0 7px var(--accent-soft); }
+  }
+
+  .entry-toggle {
+    all: unset;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    cursor: pointer;
+    padding: 8px 10px;
+    margin-left: -10px;
+    border-radius: 10px;
+    transition: background-color 0.2s ease;
+  }
+  .entry-toggle:hover { background: var(--card-hover); }
+  .entry-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .logo-badge {
+    flex: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.04);
+    overflow: hidden;
+  }
+  .logo-badge img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+
+  .entry-head { flex: 1; min-width: 0; }
+  .entry-headrow {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 2px 12px;
+    text-align: left;
+  }
+  .role-co { font-size: 15.5px; }
+  .role { font-weight: 600; color: var(--ink); }
+  .co { color: var(--muted); font-style: italic; }
+  .dates {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--muted);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .entry.current .dates { color: var(--accent); font-weight: 600; }
+
+  .chevron {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    color: var(--muted);
+    transition: transform 0.3s ease;
+  }
+  .entry-toggle[aria-expanded="true"] .chevron { transform: rotate(90deg); color: var(--accent); }
+
+  .entry-details {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.4s ease;
+    padding-left: 40px;
+  }
+
+  ul.bullets { margin: 10px 0 0; padding-left: 18px; }
+  ul.bullets li { margin-bottom: 6px; font-size: 14.5px; }
+  ul.bullets li::marker { color: var(--muted); }
+
+  .metric { font-family: var(--mono); font-weight: 600; color: var(--accent); white-space: nowrap; }
+
+  .metric-bar { display: inline-flex; align-items: center; gap: 6px; }
+  .bar-track {
+    display: inline-block;
+    width: 48px;
+    height: 5px;
+    background: var(--rule);
+    border-radius: 3px;
+    overflow: hidden;
+    vertical-align: middle;
+  }
+  .bar-fill {
+    display: block;
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    border-radius: 3px;
+    transition: width 1.1s cubic-bezier(.2,.8,.2,1);
+  }
+
+  /* ---------- Education ---------- */
+  .edu-entry { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 2px 12px; margin-bottom: 2px; }
+  .edu-entry:not(:first-of-type) { margin-top: 14px; }
+  .school { font-weight: 600; }
+  .loc { color: var(--muted); font-weight: 400; }
+  .year { font-family: var(--mono); font-size: 12.5px; color: var(--muted); }
+  .degree { font-size: 14.5px; color: var(--ink); margin-top: 1px; }
+
+  footer.meta {
+    text-align: center;
+    margin-top: 46px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--rule);
+    letter-spacing: 0.05em;
+  }
+
+  @media (max-width: 560px) {
+    .page { padding: 36px 20px 60px; }
+    h1.name { font-size: 21px; }
+    .contact { font-size: 12.5px; }
+    .skills-row { grid-template-columns: 1fr; }
+    .skills-row dt { margin-top: 6px; }
+    .entry-headrow { flex-direction: column; align-items: flex-start; }
+    .timeline { padding-left: 20px; }
+    .entry::before { left: -27px; }
+    .theme-toggle { top: 14px; right: 14px; width: 36px; height: 36px; }
+  }
+
+  @media print {
+    .theme-toggle, .toggle-all, .chevron { display: none !important; }
+    .entry-details { max-height: none !important; }
+    .entry-toggle { cursor: default; padding-left: 0; margin-left: 0; }
+    body { background: #fff; color: #000; }
+    .page { padding: 0.4in 0.5in; max-width: 100%; }
+    .reveal { opacity: 1 !important; transform: none !important; }
+    .timeline::before { transform: scaleY(1) !important; }
+    a { color: #000 !important; }
+    footer.meta { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+  <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+</button>
+
+<div class="page">
+
+  <header class="identity">
+    <h1 class="name">Srinath Kanna Dhandapani</h1>
+    <div class="contact">
+      srinathkanna1991@gmail.com<span class="sep">|</span>630-812-8385<span class="sep">|</span>Seattle, WA 98012<span class="sep">|</span><a href="https://www.linkedin.com/in/srinath-kanna-dhandapani-52532769/" target="_blank" rel="noopener">LinkedIn</a>
+    </div>
+  </header>
+
+  <section class="summary reveal">
+    <h2 class="section-label"><span class="label-text">Professional Summary</span></h2>
+    <p>Senior Software Engineer with 9+ years building and scaling distributed systems at Meta, Amazon, and Atlassian. Passionate about solving hard infrastructure problems — from cost efficiency to reliability to security — with a track record of driving multi-million dollar infrastructure savings.</p>
+  </section>
+
+  <section class="skills reveal">
+    <h2 class="section-label"><span class="label-text">Skills</span></h2>
+    <dl class="skills-row">
+      <dt>Languages</dt>
+      <dd>Java, Go, Python, Hack</dd>
+      <dt>Cloud &amp; Infrastructure</dt>
+      <dd>AWS, Kubernetes, Docker, Terraform, Distributed Systems, System Design, Okta, OAuth/SSO, OPA</dd>
+    </dl>
+  </section>
+
+  <section class="work reveal">
+    <h2 class="section-label">
+      <span class="label-text">Work History</span>
+      <button class="toggle-all" id="toggleAll" type="button">expand all</button>
+    </h2>
+
+    <div class="timeline" id="timeline">
+
+      <div class="entry current" data-company="meta">
+        <button class="entry-toggle" aria-expanded="true" aria-controls="d-meta" type="button">
+          <span class="logo-badge"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJQAAACUCAMAAABC4vDmAAAAclBMVEX///8AfvcAe/cAdfcAePcAcvYAcPbt8/7y9/72+f/q8f7v9f77/f/l7v7e6f3Z5v21zvzE1/wAbfYthfiZvfrJ2vyLtfqoxvt+rPmvyPtgnPlqnfhZlPhqofm70vwkgfdFkPg9i/jS4P2LsPkAZ/Z1qPonAhhGAAAFGklEQVR4nO2aW5OiOhCApZOgOCIiXpABBVz+/19cL6STQOI4Gzx1Hvp72KotWtJ0On3LzGYEQRAEQRAEQRAEQRAEQRAEQRDE/5l4fyiB86DpTkn0Qi6K2zTdt+uvz6uU5FnIIbgBXPDyuHLIfe2KS3gH6nz/YZWKkAcawMRxYZGLc/HU/C4DDDavTOrJEQyVHrB6PZI7XdhQKPmQSvNSjFS6W0LsTLlFEY6FwsNHdFqWYzM9MRf8aqxyYf6BLVwzl05BIAq1YAtgF2KNzfu8iBvHWs8FO6nVGnUCzgTjXP2MfU+sVZSZdhqag5VPuQQfiPp6TtrztRQwFJqKTj9OnPEsu/2jKyauD90vIM106oPmIlXfMzwSfuy0c8eywyMIzI/GabxrtZB7zAp9pw6oFdtMp9NSO+O8wrgUnfRdFOdZxaWLmYH+JO0M3JUBfs2q1LzV2IG41rY163rLsevwDRtpK15NpdSGOXS67eG3OgAy3PNi/IqdfAWfKBGulOuIUVxeFYOMEkBp26KqF4NsGqXwKwP+PV5vXprRAWBpe0mcAbreBMSZcnLbekszZrHU/pqNkIacIt0oQ7GjVWCvx1XuTLwyXAiH1r8Cl3R+41GLVxfne1LpVbW/Tmdc0bUxs1mhbMVjl1BUyMjqFHmbChNs45SZq2wNhTM8yhDKvZPN+iKXe3FsIu0EipNTLJRu4FstnAQaau4UOuixCpztC2ahcQH9O2ppA/exmrVG+cs7l9xepiHf/cP1hLP0X9Rm+GStQzBupjl/KW6M+6zng0TjziTy0DC/WgFLIebcvXbU43CXr8s4zF22fIvVN1a3rvd8yXCgFaLgiETrbS/q5VRLDECZK+LJk8cr5VrM5et/etncR6kES8bK4QZ7eRIucaJM5aqa+lLBL1KlcknXt+HJu/tcpdKkI673EtBYy5s3UQWjo+KXXQ7A7T+Rcvmt3dfR033CZ46Hz+7nrVT62aaoKifIrBski6rQZ96BOS20Vi3YUsGzH4iUr/NR83BHxvTQp1LHbLy1Psact+3PZrpFU1kTXCsLPZ/+D7cDbE8xbKrIqvl6bflF0n+lo4Z9D1UiWB6qnKcOU4uWssb1aZWqLQ+v8mmoVVqqigEY1zrrvgnxqhNeKYX9gvEwgldx/dNKYc4LwAgXWjvNR0X9p5XqMISZwV4bPEAzDCSTKKW+evhk4xykJKoOHXX5ifwQdyH/MxkGz8GDtYqSo37iqs08Bomg7R959e7YXzEzLyyUQ43HC0vV50NjPj1PkWZUQjY2YtWp2Zylx9moxDxwOJlLwSchY7UEtTEvRLexR0G9YzY2Cjt3d7v2M6oV1Wt0FSAdg7kEf2ZWKWfZjjq7sHdQNboalkQ57g5YZ0M3juoEagUd5iXPxv2oTRbz+CtaxJtA25t3Rh4AvVcv8B7Fs0Ve6XNhXhflRWuoXlwCxVp/CpDvl8v1Du9svEeMO2NMYAztbANXJNW7QeCMaXcBXtXUnVjzWROwV7yS63BAq/3Qp214cB5f3r2jk5oHj5ji2qGzXz3+GP8W9nu/gE8ytL5abMVfTKskUWmzFVy8N+9Btx3e9Yn6nYv9uUUr2E51m5xmQleLXd4tsQ9seC/Y+E7xFPPNRXB+iwjAb6f78P6L97fPUUUfF9W0fzqxPF67qqrywy/7yH3XCHELUyxkZT6NO5msVv8yglsm5+Nut0uT/+APTAiCIAiCIAiCIAiCIAiCIAiCIIjf8Re90zkkv+9J+QAAAABJRU5ErkJggg==" alt="Meta logo"></span>
+          <span class="entry-head">
+            <span class="entry-headrow">
+              <span class="role-co"><span class="role">Software Engineer</span> <span class="co">| Meta – Seattle, WA</span></span>
+              <span class="dates">03/2025 – Current</span>
+            </span>
+          </span>
+          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+        <div class="entry-details" id="d-meta">
+          <ul class="bullets">
+            <li>Optimize Facebook Feed infrastructure capacity to serve <span class="metric">2B+</span> daily active users cost-effectively</li>
+            <li>Drive capacity optimizations delivering <span class="metric">$10M</span> in annual infrastructure savings through systematic hot-path performance tuning</li>
+            <li>Reduce end-to-end latency by <span class="metric">15ms</span> across Feed serving through a soft cache using LRU-based memoization</li>
+            <li>Reduce OOMs and timeouts, achieving a <span class="metric metric-bar"><span class="bar-track"><span class="bar-fill" data-target="90"></span></span>90%</span> reduction in downtime (four nines → five nines availability)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="entry" data-company="atlassian">
+        <button class="entry-toggle" aria-expanded="false" aria-controls="d-atl" type="button">
+          <span class="logo-badge"><img src="data:image/png;base64,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" alt="Atlassian logo"></span>
+          <span class="entry-head">
+            <span class="entry-headrow">
+              <span class="role-co"><span class="role">Senior Software Engineer</span> <span class="co">| Atlassian – Seattle, WA</span></span>
+              <span class="dates">08/2023 – 03/2025</span>
+            </span>
+          </span>
+          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+        <div class="entry-details" id="d-atl">
+          <ul class="bullets">
+            <li>Worked on the cloud security team, specializing in service-to-service authentication and authorization</li>
+            <li>Collaborated with cross-functional teams to design and implement Okta integration for seamless single sign-on</li>
+            <li>Deployed services to Federal environments ensuring FIPS compliance, unblocking FedRAMP certification for the company</li>
+            <li>Built custom Kubernetes operators to support company-wide Kubernetes migration, driving a <span class="metric metric-bar"><span class="bar-track"><span class="bar-fill" data-target="38"></span></span>38%</span> reduction in EC2 compute costs</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="entry" data-company="amazon">
+        <button class="entry-toggle" aria-expanded="false" aria-controls="d-sde2" type="button">
+          <span class="logo-badge"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQ4AAACUCAMAAABV5TcGAAAA3lBMVEX///8jHyD4pRsAAAD///0kHiD8///8/Pz//f////vx8fGJh4j///n2phn7ox0hHyAbGRr2nwD6oiUYFBX4//r1pACZl5jKyMkTDxH66cS6uLleXV0JAATk5OSPjo9/fn9zcXL43ar88NBRUFDT0tNEQ0Owrq8wLy9ramr779X0vFb0vF353r////P79ufxqB31piykoqM5ODj00pT0y332w2n3rEjywXj98+3357T2sDn5w3P0yZPzsUX8qz75y43wznP8/9z69MT/nB/34aL33JTprB3kpCzosz33tVSo1D3fAAANW0lEQVR4nO1dCWOa2BZmk00QCKK470ZiwH3SaG3eTNt08v//0DvngqnRS2oyMSbI1xkzVkY4H2e/5xKGSZEiRYoUKVKkSJEiRYoU8ZAZSX7yNgWwADj1NZwakqR2+/VB59LkES7baxbKXUmSTn1h7w9JrZUbnZAG2zRZljVN08W31cqkq54XI8BFBYnIZNgdZNhMleenhTNipFZssHzVAC4y+3wgDJuvDsq1U1/nO0Bi1HLT5U0aC08YqfKVssok3Y9IxYbxZzKADsPg7UYX+UssQDUKPd40jD/TwcIxBt/rM8KpL/pokJjawHXZg9hgyUGuOZGTqx/dDn8IEwQZAtssJDQ9k5hizz2YjYgT1mYnp77wo0BENuhx9VmYl+VE+tNaxzVeQQfrVmoJpENu8ugQXk4HWy2c+trfHBJTcF9DBVGPXvHUl//m6HZe4zhC8IlTD6nO0+sTw7Rd17bh1Y5Xj0rSypdib19apMd0LzuVZiObbVZ6bJw5mUb51Nf/tlDr/H4qCsJXp41+LQwbUndSYWM0hC8kK7SA56Bk5qY5KG/LWStMqXlahm8my1rKFOVgWbu+I6XUn1L1w+11T3Pdx4GapdUq1exeP0MqUMu7jJ2oUFujFCuGW1H3j1Q7No0QPlF0FKtPZcxge4enGkDBpNLRf+9LPiKk/o6tYECtVqiVSPeS1irjJ1Jy2kBSYZ+OTIz+qz0qHQWKYX1WSOX97miGj0klKrTYwtcTRAcjTapkQck1zUykHnwn5tgmLfUAOhJkLAyurZQLjUrvEosUgEt3pIzMNKh0ZJOkHVtQgZdJtjkoxrV0sudBB65EbyddcQtKZ0LHDqQz145DkdLxBOdLB7qPbZNR1Vq3O6CmYedAx2b+CVgo9ieFbKM5qHQuKWycBx1ARLc8qTeAhN6lYVchT4vpmCabDqIVtXJ90OlNL00XYJum8cxSdpLpELAxWoAMNWMTGmJJOA86mFp2atiuecDQS8LpECGQdCs8H7+mckZ0YGDt9vjqYfMuiacDIkkDyUjpIPmWVHQPn/5JOB2gGoUX+4wE01Fr8JkIcVIbhkkfK0waHRKw4W7m37bpyISzx3a1yvMu5CCXZ0EHOFF7v30c/mPiEHqlmS1M+v1+uXIOJZxaMGKyLptnK4VysVZTw/5Y8gt8ELN8ue9FMeBm+Mt6sbZd5SeeDoFMDe7LCHS4Zra7I2ji6SAhlhJNDKM6Lau7Q6NnQEeXYiq4a2VKWWzJUlfhkkSHWqcmo6ZRo8wTJ5+OWjXD7hsLLlpTtgE2kk4HmWfYp6M6oC61JJ4OteLS6ODpo+bNxNNBnZNze/SNCIlfWChSHKlh8DH7VDpJp4M2NmiwMRMNMdM/CaKjU6VqB13AGn02LEF0uBQBgQ76wWU6HY3E0CHRcjDDtOlHZ6nrLtXk7FlQ6XSY9IMr1DFbu5cYOmr0djFtclBiylP6qpybmKF0Ch2Yk1FdqUTNSXHQsJ+ULRxxdNDuN20XEDm+Shtg/5SIoyO7My0Hb9Qm3bAyhL1kPK2BElmQDpPfp2Nis7TqhtBRkRLyFBzKHSfqMWF26ChO3dgHnBh8MvbDSQx9Rxdrmiojb244Dp0Wn31ggW0nwntITIxD2NkPKhV7zy/g8s1E2Aqzu5vlEdXKYxtd6haMPy1nx9XAnwzdODkz7rRe7NZqtW550uFt9g9zDibkYglQEJW+/RG3FZs82xk0mxWDP+TJHm7n87sPCTec0288ibcurlUbu39NP9pIxJa4Lv/8vE/m2bdbsOunFuUtoA6o3dIYGHFbzyE0J2P/KK1bGg8+JuKafDkZj0VSGy/gg2/SSxeXT0jPA9Jv4+CpMH4AVR9lNJ131SSEWYQUn4rtSV1gRFEu7x2OLO2zIQjx7z4ypALxprFTctHQmO32idBqnd9a1s1kTDcboxmEAlEUcDeIorynSP8JahZnw55//I+JDz0Kxa5Vqr8PzdjGhMKGoBAWFICmaYr2ecjAhy/WYwNoBPcSn1pCalwJH4DySJ47LdN2EgpIggKaAX9EBij5NLaCkPu9ajwhhmt3+ts5eBH5IB/ZnZh0g+yWEkOgsiifig+m2LiMmTs2+Wqn3n26uRafyYdjlvYgrnLT/CDwCIIg8E/uShVUVVEgN0UAlf3D4fgg28YUp2nZ7WFbfOCzPSh0ZWZn+qVYqZqs6za2Z4RAYjifBsf6Xqk1my+uEA/D1bx1/UUQjyLmoQDvhXqq4H8gJwfcHLU4afZsfDwBInwQdm9QKNdo97/bMPlp4UnyJSiy4iuC4LXmw7HOWQCOwx+O/teNd0pnKouMIAata39jtQfqKm6LrDeaA0CzkZ30i10qF2Rwu1juqk+eso+qITDt2XBkWTrH5XL47wW8AifOzZc3EOu1UDRZyN/eL1clhcE4R/zZYZBUtUagPvv4b+pnouZ9XTuoE0AEgBvrTvjGWgcvFuINkWd80Rtb3Lc7D/y7pr1HfSVoorfgHCtnbSF3oevAy4npACcqS6WlxelLJCT/HhUFZBdfgYDReji/m7UI7ob3FpfTHf3EdID7kDSxfWV9zzn3//sbSg1gSCC/PkI4WkokisE//wQ+QJMEgWRgWjADOkZj6+HEdAAEvz0Et56zRj9BQ2QSXjD6HvWkcAIJX0FZfAHCSbAm8WX1AeiA2zXXwXy/g2f30KMqWv5wp/paYHz3sUoBTRRlYQ506NbcP/ZpD7guWfRny5EOwc7SF6VAETEaHtmtop1g1NXyeQUt9Aa1Q/+hHfesB0CAQophroeOruuYDw1/eL4si/nj6ocCGqEF1/PFj0CCXFRbWRhxS0c950EANsS8wHirMYn+QMhyXgJXRz57aw/y+H2+FrR/XmE22sIM0IPwlrMevDc+3SsAzp3BFExrLSE30jEbsvSrmRegEitCxAiWGtHPl5+AvKBtiCT7hfN98X4sxhzm59ZPX1TEtpUDOj6A63iEqJQWOlpwjhtBAr28aZUCjVTfmMMrRBThFXQIpMWFZaKILgMMw/dadw+Ok8tB7mUN23lRE24tPO/1kePZ4SCXG8wg3o0wBcjlHMtZLlrXWHbD5SrYp9Fe058RBEIiUQ6M4sDF/IGzSHY+sjgoEKBSYOZQv+TAVj4MHZoPquCXViMnrCXAbCxntF7Mrj0fYnEo1cvbd2huEqNA/AC6laD09eZhjIqgo25Y61YApYEiflla4MdnH8dWRPCoggwpSOsKSghupKOWYOi1xuubr7ceOhJGFoSXNncJi9hFYLQ2ZONrSHBy8P1QtOVQNfwwLy2BclhrTzl9nI2ALk5BZ5f3Zv86ufEF9wi4ceP1atZq+8QnvuLLtaDUulutx+ikMZqjeuRQNUQJjVRmFhZ8dudD+H1ruV6JqPuD3THNmzsOUWg9dwHAn5AijaHoarWDsLUJUkhQ2ZCrDzudCnbFsRdMPsDvChM5zS/NboZLYAHzzjGygc0N5/6nR3pfYEuin7PAcK6ZY+d+rwNoyOK7hU0ZB3MznVw/SAFxcQx6Mm95kJaEkQLl19CE0LfAK/ndgWGXUfD/Lv2YD5djHT1R1N2Awh7ohYA+bwPxm07xLdjKxUzZtCk/GMCCxdsrLOsuUEX0SJpQoLCbtxyubmat23YbIo/ib8mg+P7f7evr2c3q6tcI5EbriAyE5DTwVfCXq7bGyGIUqERtaN1zVx4kwvkPuLQAOZkMntO7GWFdl9O5x5vLhbKFpDiOg68jwK9f/67/RfwaQx2GH5GeDuCCGEf0BRf66B7C1fgGKmeoEjdhSvxn9N1alqByFD5MoN0CeA9fActXvLvlyLEuLsLeHSEEXAlEyNH9SI8ae9xv18iFXeBcBO7xkEefDO9G668BnACqAlnZ9M1vHP37D2BI+ZCuA7ILkmhoGHYXS2cjUaT25Kajh+V0K/cbkf5ERz45nNMjPi6Wi1sfXI5AzGSzyBQsrfu70K1+RNeBkBWFmLGoleYPYwdcna7/Fpcj3jF0CTq35R22aXvM5sgPcCLL4awEZChkLTb0v8gAUxqP574sgT5+WDo2wAga3AIjoS/ACOkQDp7Hb4UhzEGA+raakRJod11a0ATvruW/Lp95dwjYoCEJ5cM3LED/xMMjG5HJoE/Rx3+t7kqBAq5BFPM7CgDfr/gig0tfnwCgyzIUM/DHu/66uhqRkMHtWMc+wk91UCV9PLxrYYcN/Kei5IXd3+0MfItY0HySQRchXLbEi9UC73o2H34jofRZPnSdrJ5w68V8VvI0icHbT3yDRvUOH95nbKDkMcrg4mWYMWpB4JVakGvqJLfY8q6hgUTLSM7oCoqcEiRpiowBVIL/V8AkVKCpgSC8Q6v6TfB7Sf1REJFw4pVm8/niYb0cj8NYAtyMIIVfD1egESUvCHxyPE44RV2jWHsQTrxw/98BPlHz/QB4abfbpQ3abTKnga2T84IcLdRhEiHkEdi4IMjnsXNy6smVd4YgPl3vF1Fj0M+Qfih6m3OiI78Z5sLeHwEJoKSZE7VBzg1CtGIQ2ki47EBa7s+5zaRiS95oUFakf5oiRYoUKVKkSJEiRYqzxv8Bc+Ya0eCdmaAAAAAASUVORK5CYII=" alt="Amazon logo"></span>
+          <span class="entry-head">
+            <span class="entry-headrow">
+              <span class="role-co"><span class="role">Software Development Engineer 2</span> <span class="co">| Amazon.com, Inc. – Seattle, WA</span></span>
+              <span class="dates">03/2020 – 08/2023</span>
+            </span>
+          </span>
+          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+        <div class="entry-details" id="d-sde2">
+          <ul class="bullets">
+            <li>Designed and implemented a system to optimally pack purchase orders into containers at PO creation time, balancing physical capacity, cost, and transit time to improve item availability</li>
+            <li>Integrated ML-driven bin-packing and a multi-dimensional dynamic programming route optimization model, reducing capacity costs by <span class="metric metric-bar"><span class="bar-track"><span class="bar-fill" data-target="27"></span></span>27%</span> and achieving <span class="metric metric-bar"><span class="bar-track"><span class="bar-fill" data-target="30"></span></span>30%</span> more cost-efficient routing while balancing ROI against PO costs</li>
+            <li>Monitored system health and proactively resolved issues, maintaining <span class="metric metric-bar"><span class="bar-track"><span class="bar-fill" data-target="99.9"></span></span>99.9%</span> availability SLA</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="entry" data-company="amazon">
+        <button class="entry-toggle" aria-expanded="false" aria-controls="d-sde1" type="button">
+          <span class="logo-badge"><img src="data:image/png;base64,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" alt="Amazon logo"></span>
+          <span class="entry-head">
+            <span class="entry-headrow">
+              <span class="role-co"><span class="role">Software Development Engineer</span> <span class="co">| Amazon.com, Inc. – Seattle, WA</span></span>
+              <span class="dates">07/2017 – 03/2020</span>
+            </span>
+          </span>
+          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+        <div class="entry-details" id="d-sde1">
+          <ul class="bullets">
+            <li>Built an algorithm on top of ML shopping-intent classification models to power navigational widgets across product intent (e.g., "dress" → wedding, casual, formal) and gender-based routing (e.g., "shoes" → men's, women's, kids), reducing false positives and improving product discovery across Amazon Fashion</li>
+            <li>Built widgets to route traffic to Fashion pages during major sale events using these ML models, contributing to a <span class="metric metric-bar"><span class="bar-track"><span class="bar-fill" data-target="10"></span></span>10%</span> improvement in Prime Day Fashion sales</li>
+            <li>Improved service performance and operational excellence by implementing fleet setups, dashboards, monitors, run-books, and load tests — minimizing latency, errors, and ensuring uninterrupted customer traffic flow</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="entry" data-company="amazon">
+        <button class="entry-toggle" aria-expanded="false" aria-controls="d-intern" type="button">
+          <span class="logo-badge"><img src="data:image/png;base64,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" alt="Amazon logo"></span>
+          <span class="entry-head">
+            <span class="entry-headrow">
+              <span class="role-co"><span class="role">SDE Intern</span> <span class="co">| Amazon.com, Inc. – Seattle, WA</span></span>
+              <span class="dates">08/2016 – 12/2016</span>
+            </span>
+          </span>
+          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+        <div class="entry-details" id="d-intern">
+          <ul class="bullets">
+            <li>Worked on an internal tool for BAs and PMs to analyze data, extract patterns, and build models to predict related outputs</li>
+            <li>Updated the application portal with the developed model for visualization and improved performance to scale</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="education reveal">
+    <h2 class="section-label"><span class="label-text">Education</span></h2>
+
+    <div class="edu-entry">
+      <div><span class="school">Rochester Institute of Technology</span> <span class="loc">– Rochester, NY</span></div>
+      <div class="year">2017</div>
+    </div>
+    <div class="degree">M.S. Computer Science</div>
+
+    <div class="edu-entry">
+      <div><span class="school">St. Joseph's College of Engineering, Anna University</span> <span class="loc">– Chennai, India</span></div>
+      <div class="year">2013</div>
+    </div>
+    <div class="degree">B.E. Computer Science</div>
+  </section>
+
 </div>
+
+<script>
+(function () {
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---- Theme toggle ---- */
+  var root = document.documentElement;
+  var themeBtn = document.getElementById('themeToggle');
+  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var currentTheme = prefersDark ? 'dark' : 'light';
+  root.setAttribute('data-theme', currentTheme);
+  themeBtn.addEventListener('click', function () {
+    currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', currentTheme);
+  });
+
+  /* ---- Collapsible entries ---- */
+  function setExpanded(btn, expand) {
+    var details = document.getElementById(btn.getAttribute('aria-controls'));
+    btn.setAttribute('aria-expanded', expand ? 'true' : 'false');
+    if (expand) {
+      details.style.maxHeight = details.scrollHeight + 'px';
+    } else {
+      // lock current height first so it can transition down from wherever it is (incl. 'none')
+      details.style.maxHeight = details.scrollHeight + 'px';
+      requestAnimationFrame(function () {
+        details.style.maxHeight = '0px';
+      });
+    }
+  }
+
+  var toggles = Array.prototype.slice.call(document.querySelectorAll('.entry-toggle'));
+  toggles.forEach(function (btn) {
+    var expandedInitially = btn.getAttribute('aria-expanded') === 'true';
+    var details = document.getElementById(btn.getAttribute('aria-controls'));
+    if (expandedInitially) { details.style.maxHeight = details.scrollHeight + 'px'; }
+    btn.addEventListener('click', function () {
+      var isExpanded = btn.getAttribute('aria-expanded') === 'true';
+      setExpanded(btn, !isExpanded);
+    });
+  });
+
+  window.addEventListener('resize', function () {
+    toggles.forEach(function (btn) {
+      if (btn.getAttribute('aria-expanded') === 'true') {
+        var details = document.getElementById(btn.getAttribute('aria-controls'));
+        details.style.maxHeight = details.scrollHeight + 'px';
+      }
+    });
+  });
+
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function () {
+      toggles.forEach(function (btn) {
+        if (btn.getAttribute('aria-expanded') === 'true') {
+          var details = document.getElementById(btn.getAttribute('aria-controls'));
+          details.style.maxHeight = details.scrollHeight + 'px';
+        }
+      });
+    });
+  }
+
+  var toggleAllBtn = document.getElementById('toggleAll');
+  var allExpanded = false;
+  toggleAllBtn.addEventListener('click', function () {
+    allExpanded = !allExpanded;
+    toggleAllBtn.textContent = allExpanded ? 'collapse all' : 'expand all';
+    toggles.forEach(function (btn) { setExpanded(btn, allExpanded); });
+  });
+
+  /* ---- Scroll reveal + timeline draw + metric bars ---- */
+  var revealTargets = Array.prototype.slice.call(document.querySelectorAll('.reveal'));
+  var timelineEl = document.getElementById('timeline');
+  var barFills = Array.prototype.slice.call(document.querySelectorAll('.bar-fill'));
+
+  if (reduceMotion) {
+    revealTargets.forEach(function (el) { el.classList.add('in-view'); });
+    timelineEl.classList.add('in-view');
+    barFills.forEach(function (b) { b.style.width = b.getAttribute('data-target') + '%'; });
+  } else if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+    revealTargets.forEach(function (el) { io.observe(el); });
+    io.observe(timelineEl);
+
+    var barIo = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.style.width = entry.target.getAttribute('data-target') + '%';
+          barIo.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.6 });
+    barFills.forEach(function (b) { barIo.observe(b); });
+  } else {
+    revealTargets.forEach(function (el) { el.classList.add('in-view'); });
+    timelineEl.classList.add('in-view');
+    barFills.forEach(function (b) { b.style.width = b.getAttribute('data-target') + '%'; });
+  }
+})();
+</script>
+
+</body>
+</html>
