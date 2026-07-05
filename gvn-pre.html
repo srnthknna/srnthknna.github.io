@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GVN-PRE for MLton — Srinath Kanna Dhandapani</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FAFAF9;
+    --ink: #17191C;
+    --muted: #6B7280;
+    --rule: #E3E4E0;
+    --accent: #2F6F4E;
+    --accent-soft: #E4EFE8;
+    --card-hover: #F1F1EF;
+    --warn: #B98900;
+    --warn-soft: #FBF1D9;
+    --full: #C24E4E;
+    --full-soft: #F7E2E2;
+    --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color-scheme: light;
+  }
+  html[data-theme="dark"] {
+    --paper: #14171B;
+    --ink: #ECEDEE;
+    --muted: #98A0AC;
+    --rule: #2A2F36;
+    --accent: #4FCB8F;
+    --accent-soft: rgba(79, 203, 143, 0.14);
+    --card-hover: #1B1F25;
+    --warn: #E8C15A;
+    --warn-soft: rgba(232, 193, 90, 0.14);
+    --full: #E17575;
+    --full-soft: rgba(225, 117, 117, 0.14);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.35s ease, color 0.35s ease;
+  }
+  .page { max-width: 760px; margin: 0 auto; padding: 40px 20px 80px; }
+
+  .theme-toggle {
+    position: fixed; top: 22px; right: 22px; width: 40px; height: 40px; border-radius: 50%;
+    border: 1px solid var(--rule); background: var(--paper); color: var(--ink);
+    display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20;
+    transition: transform 0.25s ease, border-color 0.25s ease;
+  }
+  .theme-toggle:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .theme-toggle svg { width: 18px; height: 18px; }
+  .theme-toggle .sun { display: none; }
+  html[data-theme="dark"] .theme-toggle .moon { display: none; }
+  html[data-theme="dark"] .theme-toggle .sun { display: block; }
+
+  .back-link {
+    display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 12.5px;
+    color: var(--muted); text-decoration: none; letter-spacing: 0.03em; margin-bottom: 26px;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  header.top { margin-bottom: 30px; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 8px;
+  }
+  h1.title { font-size: 24px; font-weight: 700; margin: 0 0 10px; letter-spacing: -0.01em; }
+  header.top p.dek { color: var(--muted); font-size: 15px; margin: 0; max-width: 600px; }
+
+  section { margin: 44px 0; }
+  h2.section-title {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600; margin: 0 0 16px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--rule);
+  }
+  p { margin: 0 0 12px; }
+  p:last-child { margin-bottom: 0; }
+
+  /* ---- full vs partial mini comparison ---- */
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .compare-card {
+    border: 1px solid var(--rule); border-radius: 12px; padding: 18px 16px; text-align: center;
+  }
+  .compare-card h3 {
+    font-size: 13px; margin: 0 0 14px; font-weight: 600;
+  }
+  .compare-card.full h3 { color: var(--accent); }
+  .compare-card.partial h3 { color: var(--warn); }
+  .mini-cfg { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .mini-node {
+    font-family: var(--mono); font-size: 11px; border: 1px solid var(--rule); border-radius: 6px;
+    padding: 5px 10px; background: var(--card-hover); color: var(--ink); white-space: nowrap;
+  }
+  .mini-node.computed { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+  .mini-node.warn { border-color: var(--warn); background: var(--warn-soft); color: var(--warn); }
+  .mini-node.empty { color: var(--muted); font-style: italic; }
+  .mini-branches { display: flex; gap: 20px; }
+  .mini-connector { width: 1px; height: 10px; background: var(--rule); }
+  .compare-card p { font-size: 12.5px; color: var(--muted); margin-top: 14px; }
+  @media (max-width: 560px) {
+    .compare-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ---- interactive stepper ---- */
+  .stepper {
+    border: 1px solid var(--rule); border-radius: 14px; padding: 22px 20px 20px; background: var(--card-hover);
+  }
+  svg.cfg-diagram { width: 100%; height: auto; display: block; }
+  .cfg-box rect { transition: fill 0.35s ease, stroke 0.35s ease; }
+  .cfg-box text { font-family: var(--mono); font-size: 12.5px; fill: var(--ink); transition: fill 0.35s ease; }
+  .cfg-box .box-label { font-size: 9.5px; letter-spacing: 0.05em; text-transform: uppercase; fill: var(--muted); }
+  .cfg-arrow { stroke: var(--muted); stroke-width: 1.5; fill: none; }
+  .cfg-arrowhead { fill: var(--muted); }
+
+  .box-default rect { fill: var(--paper); stroke: var(--rule); stroke-width: 1.5; }
+  .box-neutral rect { fill: var(--card-hover); stroke: var(--rule); stroke-width: 1.5; }
+  .box-warn rect { fill: var(--warn-soft); stroke: var(--warn); stroke-width: 1.5; }
+  .box-warn text.code { fill: var(--warn); }
+  .box-full rect { fill: var(--full-soft); stroke: var(--full); stroke-width: 1.5; }
+  .box-full text.code { fill: var(--full); }
+  .box-done rect { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.5; }
+  .box-done text.code { fill: var(--accent); }
+  .box-empty text.code { fill: var(--muted); font-style: italic; }
+
+  .legend { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; margin: 16px 0 4px; }
+  .legend-item {
+    display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 11px;
+    color: var(--muted); opacity: 0.35; transition: opacity 0.3s ease;
+  }
+  .legend-item.active { opacity: 1; color: var(--ink); }
+  .legend-item i { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
+  .legend-item[data-state="warn"] i { background: var(--warn); }
+  .legend-item[data-state="full"] i { background: var(--full); }
+  .legend-item[data-state="done"] i { background: var(--accent); }
+
+  .step-caption {
+    font-size: 14px; color: var(--ink); min-height: 66px; margin: 14px 2px 6px; max-width: 560px;
+  }
+  .step-caption .step-num { font-family: var(--mono); color: var(--accent); font-weight: 600; margin-right: 4px; }
+
+  .step-controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; }
+  .step-btn {
+    font-family: var(--mono); font-size: 12.5px; color: var(--ink); background: var(--paper);
+    border: 1px solid var(--rule); border-radius: 20px; padding: 7px 16px; cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+  }
+  .step-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .step-btn:disabled { opacity: 0.35; cursor: default; }
+  .step-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .step-btn.primary { background: var(--accent); color: var(--paper); border-color: var(--accent); }
+  .step-dots { display: flex; gap: 8px; }
+  .step-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--rule); border: none; cursor: pointer; padding: 0;
+  }
+  .step-dot.active { background: var(--accent); }
+
+  /* ---- pipeline ---- */
+  .pipeline { display: flex; flex-wrap: wrap; gap: 0; align-items: stretch; }
+  .pipe-stage {
+    flex: 1 1 0; min-width: 100px; text-align: center; padding: 12px 8px; position: relative;
+  }
+  .pipe-stage .pipe-name {
+    font-family: var(--mono); font-size: 11.5px; font-weight: 600; color: var(--ink);
+    border: 1px solid var(--rule); border-radius: 8px; padding: 8px 6px; background: var(--card-hover);
+  }
+  .pipe-stage .pipe-desc { font-size: 11.5px; color: var(--muted); margin-top: 8px; line-height: 1.4; }
+  .pipe-arrow { display: flex; align-items: center; color: var(--rule); font-size: 16px; padding: 0 2px; }
+  @media (max-width: 640px) {
+    .pipeline { flex-direction: column; }
+    .pipe-arrow { transform: rotate(90deg); align-self: center; padding: 4px 0; }
+  }
+
+  /* ---- results chart ---- */
+  .chart-wrap { display: flex; align-items: flex-end; gap: 22px; height: 140px; padding: 0 8px 8px; }
+  .chart-bar-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; flex: 1; height: 100%; }
+  .chart-value { font-family: var(--mono); font-size: 12px; color: var(--ink); margin-bottom: 6px; }
+  .chart-bar { width: 100%; max-width: 52px; border-radius: 6px 6px 0 0; background: var(--rule); transition: height 1s cubic-bezier(.2,.8,.2,1); }
+  .chart-bar.highlight { background: var(--accent); }
+  .chart-label { font-family: var(--mono); font-size: 10.5px; color: var(--muted); margin-top: 8px; text-align: center; }
+  .chart-note { font-size: 13px; color: var(--muted); margin-top: 18px; }
+
+  .paper-link {
+    display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 13px;
+    color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent;
+  }
+  .paper-link:hover { border-bottom-color: var(--accent); }
+
+  footer.page-footer {
+    margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--rule);
+    font-size: 13px; color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+  <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+</button>
+
+<div class="page">
+  <a class="back-link" href="index.html">&larr; back to resume</a>
+
+  <header class="top">
+    <p class="eyebrow">RIT MS Project — Compilers</p>
+    <h1 class="title">Eliminating Partial Redundancy in MLton</h1>
+    <p class="dek">MLton is a whole-program optimizing compiler for Standard ML. This project adds GVN-PRE, an optimization pass that catches redundant computations ordinary common-subexpression elimination has to leave behind — because they're only redundant along some paths, not all of them.</p>
+  </header>
+
+  <section>
+    <h2 class="section-title">Full vs. partial redundancy</h2>
+    <p>An expression is <strong>fully redundant</strong> if it's already been computed on every path leading to it — safe for any compiler to remove. It's <strong>partially redundant</strong> if that's only true on some paths. Plain CSE can only clean up the first kind.</p>
+    <div class="compare-grid">
+      <div class="compare-card full">
+        <h3>Full redundancy</h3>
+        <div class="mini-cfg">
+          <div class="mini-node">if (cond)</div>
+          <div class="mini-connector"></div>
+          <div class="mini-branches">
+            <div class="mini-node computed">X = A+B</div>
+            <div class="mini-node computed">Z = A+B</div>
+          </div>
+          <div class="mini-connector"></div>
+          <div class="mini-node computed">Y = A+B</div>
+        </div>
+        <p>Computed on both branches — CSE removes it immediately.</p>
+      </div>
+      <div class="compare-card partial">
+        <h3>Partial redundancy</h3>
+        <div class="mini-cfg">
+          <div class="mini-node">if (cond)</div>
+          <div class="mini-connector"></div>
+          <div class="mini-branches">
+            <div class="mini-node computed">X = A+B</div>
+            <div class="mini-node empty">nothing</div>
+          </div>
+          <div class="mini-connector"></div>
+          <div class="mini-node warn">Y = A+B</div>
+        </div>
+        <p>Only one branch computes it — CSE can't touch this. GVN-PRE can.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Watch GVN-PRE fix it</h2>
+    <div class="stepper">
+      <svg class="cfg-diagram" viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+            <path d="M0,0 L8,4 L0,8 Z" class="cfg-arrowhead"></path>
+          </marker>
+        </defs>
+
+        <path class="cfg-arrow" marker-end="url(#arrowhead)" d="M295,58 C230,80 190,90 165,116"></path>
+        <path class="cfg-arrow" marker-end="url(#arrowhead)" d="M345,58 C410,80 450,90 475,116"></path>
+        <path class="cfg-arrow" marker-end="url(#arrowhead)" d="M165,178 C200,205 250,215 290,228"></path>
+        <path class="cfg-arrow" marker-end="url(#arrowhead)" d="M475,178 C440,205 390,215 350,228"></path>
+
+        <g class="cfg-box box-neutral" id="boxEntry">
+          <rect x="255" y="16" width="130" height="42" rx="8"></rect>
+          <text x="320" y="42" text-anchor="middle" class="code">if (cond)</text>
+        </g>
+
+        <g class="cfg-box box-default" id="boxLeft">
+          <text x="80" y="112" class="box-label">left branch</text>
+          <rect x="80" y="118" width="170" height="58" rx="8"></rect>
+          <text x="165" y="152" text-anchor="middle" class="code" id="leftText">X = A + B</text>
+        </g>
+
+        <g class="cfg-box box-default box-empty" id="boxRight">
+          <text x="390" y="112" class="box-label">right branch</text>
+          <rect x="390" y="118" width="170" height="58" rx="8"></rect>
+          <text x="475" y="152" text-anchor="middle" class="code" id="rightText">(nothing computed)</text>
+        </g>
+
+        <g class="cfg-box box-warn" id="boxMerge">
+          <text x="320" y="222" class="box-label">merge point</text>
+          <rect x="230" y="228" width="180" height="58" rx="8"></rect>
+          <text x="320" y="262" text-anchor="middle" class="code" id="mergeText">Y = A + B</text>
+        </g>
+      </svg>
+
+      <div class="legend">
+        <span class="legend-item" data-state="warn"><i></i>partial redundancy</span>
+        <span class="legend-item" data-state="full"><i></i>full redundancy</span>
+        <span class="legend-item" data-state="done"><i></i>eliminated</span>
+      </div>
+
+      <div class="step-caption" id="stepCaption"></div>
+
+      <div class="step-controls">
+        <button class="step-btn" id="prevBtn">&larr; Back</button>
+        <div class="step-dots" id="stepDots"></div>
+        <button class="step-btn primary" id="nextBtn">Next &rarr;</button>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">The four-phase pass</h2>
+    <p>Once a redundancy is found, MLton's SSA form runs through four phases to remove it — matching what just happened in the diagram above.</p>
+    <div class="pipeline">
+      <div class="pipe-stage">
+        <div class="pipe-name">BuildSets I</div>
+        <div class="pipe-desc">Walk the dominator tree, record what each block computes and what's already available.</div>
+      </div>
+      <div class="pipe-arrow">&rarr;</div>
+      <div class="pipe-stage">
+        <div class="pipe-name">BuildSets II</div>
+        <div class="pipe-desc">Work out which expressions <em>could</em> be hoisted into each block, iterating to convergence.</div>
+      </div>
+      <div class="pipe-arrow">&rarr;</div>
+      <div class="pipe-stage">
+        <div class="pipe-name">Insert</div>
+        <div class="pipe-desc">Add the missing computation to whichever branch doesn't already have it.</div>
+      </div>
+      <div class="pipe-arrow">&rarr;</div>
+      <div class="pipe-stage">
+        <div class="pipe-name">Eliminate</div>
+        <div class="pipe-desc">Replace every redundant statement with a reference to the value that already exists.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Does it actually help?</h2>
+    <p>On a synthetic benchmark built to contain real partial redundancy, GVN-PRE cut runtime to roughly a third of the unoptimized baseline — about 3x faster, and clearly ahead of CSE alone.</p>
+    <div class="chart-wrap">
+      <div class="chart-bar-col">
+        <div class="chart-value">1.00</div>
+        <div class="chart-bar" style="height:100%"></div>
+        <div class="chart-label">No opt</div>
+      </div>
+      <div class="chart-bar-col">
+        <div class="chart-value">1.00</div>
+        <div class="chart-bar" style="height:100%"></div>
+        <div class="chart-label">CSE</div>
+      </div>
+      <div class="chart-bar-col">
+        <div class="chart-value">0.37</div>
+        <div class="chart-bar highlight" style="height:37%"></div>
+        <div class="chart-label">GVN-PRE</div>
+      </div>
+      <div class="chart-bar-col">
+        <div class="chart-value">0.36</div>
+        <div class="chart-bar highlight" style="height:36%"></div>
+        <div class="chart-label">Both</div>
+      </div>
+    </div>
+    <p class="chart-note">Runtime ratio vs. the unoptimized baseline (lower is faster). Across MLton's full 43-program benchmark suite the picture was more mixed — about half the programs got faster, since inserting code on missing branches can add register pressure that eats into the win. That trade-off is discussed in the write-up below.</p>
+  </section>
+
+  <footer class="page-footer">
+    <a class="paper-link" href="https://www.cs.rit.edu/~mtf/student-resources/20165_dhandapani_mscourse.pdf" target="_blank" rel="noopener">Read the full write-up (PDF) &rarr;</a>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var themeBtn = document.getElementById('themeToggle');
+  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var currentTheme = prefersDark ? 'dark' : 'light';
+  root.setAttribute('data-theme', currentTheme);
+  themeBtn.addEventListener('click', function () {
+    currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', currentTheme);
+  });
+
+  var boxLeft = document.getElementById('boxLeft');
+  var boxRight = document.getElementById('boxRight');
+  var boxMerge = document.getElementById('boxMerge');
+  var rightText = document.getElementById('rightText');
+  var mergeText = document.getElementById('mergeText');
+  var caption = document.getElementById('stepCaption');
+  var dotsWrap = document.getElementById('stepDots');
+  var prevBtn = document.getElementById('prevBtn');
+  var nextBtn = document.getElementById('nextBtn');
+  var legendItems = document.querySelectorAll('.legend-item');
+
+  var steps = [
+    {
+      leftClass: 'box-default', rightClass: 'box-default box-empty', mergeClass: 'box-warn',
+      rightText: '(nothing computed)', mergeText: 'Y = A + B', legend: 'warn',
+      caption: 'The left branch already computed A + B and kept it as X. The right branch does nothing. At the merge point, recomputing A + B for Y is wasted work on the left path — but it\'s not redundant on the right. Because it isn\'t available on <em>every</em> path, plain CSE has to leave it alone.'
+    },
+    {
+      leftClass: 'box-full', rightClass: 'box-full', mergeClass: 'box-full',
+      rightText: 'Z = A + B', mergeText: 'Y = A + B', legend: 'full',
+      caption: 'GVN-PRE inserts a matching computation into the empty branch. Now A + B is available no matter which path was taken — a <em>full</em> redundancy, which is always safe to remove.'
+    },
+    {
+      leftClass: 'box-done', rightClass: 'box-done', mergeClass: 'box-done',
+      rightText: 'Z = A + B', mergeText: 'Y = X or Z', legend: 'done',
+      caption: 'The recomputation at the merge point is deleted. Y just takes whichever value already exists — X from the left path, Z from the right — passed in directly instead of recomputed from scratch.'
+    }
+  ];
+
+  var current = 0;
+
+  function renderDots() {
+    dotsWrap.innerHTML = '';
+    steps.forEach(function (_, i) {
+      var dot = document.createElement('button');
+      dot.className = 'step-dot' + (i === current ? ' active' : '');
+      dot.setAttribute('aria-label', 'Go to step ' + (i + 1));
+      dot.addEventListener('click', function () { current = i; render(); });
+      dotsWrap.appendChild(dot);
+    });
+  }
+
+  function render() {
+    var s = steps[current];
+    boxLeft.setAttribute('class', 'cfg-box ' + s.leftClass);
+    boxRight.setAttribute('class', 'cfg-box ' + s.rightClass);
+    boxMerge.setAttribute('class', 'cfg-box ' + s.mergeClass);
+    rightText.textContent = s.rightText;
+    mergeText.textContent = s.mergeText;
+    caption.innerHTML = '<span class="step-num">' + (current + 1) + ' / ' + steps.length + '</span>' + s.caption;
+
+    legendItems.forEach(function (el) {
+      el.classList.toggle('active', el.getAttribute('data-state') === s.legend);
+    });
+
+    prevBtn.disabled = current === 0;
+    nextBtn.textContent = current === steps.length - 1 ? 'Replay' : 'Next \u2192';
+    renderDots();
+  }
+
+  prevBtn.addEventListener('click', function () {
+    if (current > 0) { current--; render(); }
+  });
+  nextBtn.addEventListener('click', function () {
+    if (current === steps.length - 1) { current = 0; }
+    else { current++; }
+    render();
+  });
+
+  render();
+})();
+</script>
+
+</body>
+</html>

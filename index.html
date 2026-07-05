@@ -159,7 +159,7 @@
 
   .summary p { margin: 0; font-size: 15px; color: var(--ink); }
 
-  .project-entry { }
+  .project-entry + .project-entry { margin-top: 22px; }
   .project-head {
     display: flex;
     align-items: center;
@@ -557,6 +557,30 @@
         <a class="play-btn" href="pong.html" target="_blank" rel="noopener">Play &rarr;</a>
       </div>
       <p class="project-desc">A browser-based Pong clone — canvas rendering, angle-based ball physics off the paddle, and a CPU opponent with capped reaction speed. 60-second matches, live scoring.</p>
+    </div>
+
+    <div class="project-entry">
+      <div class="project-head">
+        <span class="project-title">GVN-PRE for MLton</span>
+        <a class="play-btn" href="gvn-pre.html" target="_blank" rel="noopener">Explore &rarr;</a>
+      </div>
+      <p class="project-desc">RIT MS project implementing GVN-PRE — a compiler optimization pass that eliminates partial redundancy MLton's existing CSE pass can't touch. Interactive subpage walks through the algorithm step by step.</p>
+    </div>
+
+    <div class="project-entry">
+      <div class="project-head">
+        <span class="project-title">Minimax vs. Alpha-Beta Pruning</span>
+        <a class="play-btn" href="tictactoe.html" target="_blank" rel="noopener">Play &rarr;</a>
+      </div>
+      <p class="project-desc">An unbeatable Tic-Tac-Toe AI in Python, implemented with both plain minimax and alpha-beta pruning. Subpage is a playable version that shows, move by move, how many states each search actually visits.</p>
+    </div>
+
+    <div class="project-entry">
+      <div class="project-head">
+        <span class="project-title">Rolling a Die Through a Maze</span>
+        <a class="play-btn" href="diemaze.html" target="_blank" rel="noopener">Explore &rarr;</a>
+      </div>
+      <p class="project-desc">A* search over a puzzle where the state is position <em>and</em> die orientation — a cube must roll across a grid and land on the exit showing a specific face. Subpage animates the search across five mazes and three custom heuristics.</p>
     </div>
   </section>
 

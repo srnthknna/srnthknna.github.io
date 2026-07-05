@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rolling a Die Through a Maze — Srinath Kanna Dhandapani</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FAFAF9; --ink: #17191C; --muted: #6B7280; --rule: #E3E4E0;
+    --accent: #2F6F4E; --accent-soft: #E4EFE8; --card-hover: #F1F1EF;
+    --full: #C24E4E; --full-soft: #F7E2E2;
+    --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color-scheme: light;
+  }
+  html[data-theme="dark"] {
+    --paper: #14171B; --ink: #ECEDEE; --muted: #98A0AC; --rule: #2A2F36;
+    --accent: #4FCB8F; --accent-soft: rgba(79,203,143,0.14); --card-hover: #1B1F25;
+    --full: #E17575; --full-soft: rgba(225,117,117,0.14);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans);
+    font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+    transition: background-color 0.35s ease, color 0.35s ease;
+  }
+  .page { max-width: 760px; margin: 0 auto; padding: 40px 20px 80px; }
+
+  .theme-toggle {
+    position: fixed; top: 22px; right: 22px; width: 40px; height: 40px; border-radius: 50%;
+    border: 1px solid var(--rule); background: var(--paper); color: var(--ink);
+    display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20;
+    transition: transform 0.25s ease, border-color 0.25s ease;
+  }
+  .theme-toggle:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .theme-toggle svg { width: 18px; height: 18px; }
+  .theme-toggle .sun { display: none; }
+  html[data-theme="dark"] .theme-toggle .moon { display: none; }
+  html[data-theme="dark"] .theme-toggle .sun { display: block; }
+
+  .back-link {
+    display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 12.5px;
+    color: var(--muted); text-decoration: none; letter-spacing: 0.03em; margin-bottom: 26px;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  header.top { margin-bottom: 30px; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 8px;
+  }
+  h1.title { font-size: 24px; font-weight: 700; margin: 0 0 10px; letter-spacing: -0.01em; }
+  header.top p.dek { color: var(--muted); font-size: 15px; margin: 0; max-width: 600px; }
+
+  section { margin: 44px 0; }
+  h2.section-title {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600; margin: 0 0 16px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--rule);
+  }
+  p { margin: 0 0 12px; }
+  p:last-child { margin-bottom: 0; }
+  code { font-family: var(--mono); background: var(--card-hover); padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+
+  /* ---- die readout ---- */
+  .die-row { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 18px 0; flex-wrap: wrap; }
+  .die-face {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    border: 1px solid var(--rule); border-radius: 10px; padding: 10px 16px; background: var(--card-hover); min-width: 64px;
+  }
+  .die-face .face-label { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .die-face .face-value { font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--ink); }
+  .die-face.top .face-value { color: var(--accent); }
+  .die-arrow { font-size: 20px; color: var(--muted); }
+  .rule-note {
+    font-size: 13px; color: var(--muted); text-align: center; max-width: 480px; margin: 6px auto 0;
+  }
+
+  /* ---- maze + controls ---- */
+  .solver-wrap { border: 1px solid var(--rule); border-radius: 14px; padding: 22px 20px; background: var(--card-hover); }
+  .controls-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 18px; }
+  .control-select, .step-btn {
+    font-family: var(--mono); font-size: 12.5px; color: var(--ink); background: var(--paper);
+    border: 1px solid var(--rule); border-radius: 20px; padding: 8px 14px; cursor: pointer;
+  }
+  .step-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .step-btn.primary { background: var(--accent); color: var(--paper); border-color: var(--accent); }
+  .step-btn.primary:hover { color: var(--paper); opacity: 0.9; }
+  .step-btn:focus-visible, .control-select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .maze-grid { display: grid; gap: 3px; margin: 0 auto 16px; }
+  .maze-cell {
+    aspect-ratio: 1; border-radius: 4px; display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--muted);
+    background: var(--paper); border: 1px solid var(--rule); transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+  .maze-cell.obstacle { background: var(--rule); border-color: var(--rule); }
+  .maze-cell.start { color: var(--accent); border-color: var(--accent); }
+  .maze-cell.goal { color: var(--full); border-color: var(--full); font-weight: 700; }
+  .maze-cell.trail { background: var(--accent-soft); border-color: var(--accent); }
+  .maze-cell.current { background: var(--accent); color: var(--paper); border-color: var(--accent); }
+
+  .status-line { text-align: center; font-family: var(--mono); font-size: 13px; color: var(--ink); min-height: 18px; margin-bottom: 6px; }
+
+  .stats-panel { border-top: 1px solid var(--rule); padding-top: 16px; margin-top: 14px; }
+  .stats-row { display: flex; justify-content: center; gap: 34px; flex-wrap: wrap; margin-bottom: 16px; }
+  .stat-block { text-align: center; }
+  .stat-label { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .stat-line { font-family: var(--mono); font-size: 15px; color: var(--ink); font-weight: 600; }
+
+  .chart-wrap { display: flex; align-items: flex-end; gap: 20px; height: 110px; padding: 0 8px 8px; justify-content: center; }
+  .chart-bar-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; width: 78px; height: 100%; }
+  .chart-value { font-family: var(--mono); font-size: 11.5px; color: var(--ink); margin-bottom: 6px; }
+  .chart-bar { width: 100%; max-width: 46px; border-radius: 6px 6px 0 0; background: var(--rule); transition: height 0.6s cubic-bezier(.2,.8,.2,1); }
+  .chart-bar.selected { background: var(--accent); }
+  .chart-label { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 8px; text-align: center; line-height: 1.3; }
+  .chart-caption { font-size: 12.5px; color: var(--muted); text-align: center; margin-top: 4px; }
+
+  footer.page-footer {
+    margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--rule);
+    font-size: 13px; color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+  <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+</button>
+
+<div class="page">
+  <a class="back-link" href="index.html">&larr; back to resume</a>
+
+  <header class="top">
+    <p class="eyebrow">RIT Coursework — Artificial Intelligence</p>
+    <h1 class="title">Rolling a Die Through a Maze</h1>
+    <p class="dek">A cube sits on a grid with the number 1 face-up. It can roll one cell at a time — up, down, left, or right — and each roll changes which numbers face up, forward, and right. The goal: reach the exit with 1 back on top, in as few rolls as possible, found with A* search. Five mazes are provided. One of them looks perfectly solvable and isn't — see if you can spot which.</p>
+  </header>
+
+  <section>
+    <h2 class="section-title">How the die moves</h2>
+    <p>Opposite faces always add up to 7, so tracking just three faces — top, front, right — fully describes the die's orientation. Rolling it swaps those three around. Roll it to the right, for example, and the face that was on the right comes up to the top:</p>
+    <div class="die-row">
+      <div class="die-face top"><span class="face-label">Top</span><span class="face-value">1</span></div>
+      <div class="die-face"><span class="face-label">Front</span><span class="face-value">5</span></div>
+      <div class="die-face"><span class="face-label">Right</span><span class="face-value">3</span></div>
+      <div class="die-arrow">roll right &rarr;</div>
+      <div class="die-face top"><span class="face-label">Top</span><span class="face-value">4</span></div>
+      <div class="die-face"><span class="face-label">Front</span><span class="face-value">5</span></div>
+      <div class="die-face"><span class="face-label">Right</span><span class="face-value">1</span></div>
+    </div>
+    <p class="rule-note">One extra rule for this puzzle: the die is never allowed to come to rest showing 6 on top. Any roll that would do that is simply not a legal move — which is exactly what makes some layouts harder than they look.</p>
+  </section>
+
+  <section>
+    <h2 class="section-title">Watch A* solve it</h2>
+    <p>Three different heuristics estimate the remaining distance to the exit. All three guide the same search — they just disagree on how many states it takes to get there.</p>
+    <div class="solver-wrap">
+      <div class="controls-row">
+        <select class="control-select" id="mazeSelect"></select>
+        <select class="control-select" id="heuristicSelect">
+          <option value="h1">Heuristic 1 &mdash; (d&middot;c)/2</option>
+          <option value="h2">Heuristic 2 &mdash; 3d</option>
+          <option value="h3" selected>Heuristic 3 &mdash; d&sup2;&radic;2 + |c&minus;d|</option>
+        </select>
+        <button class="step-btn primary" id="solveBtn">Solve</button>
+        <button class="step-btn" id="replayBtn" style="display:none;">Replay</button>
+      </div>
+
+      <div class="maze-grid" id="mazeGrid"></div>
+      <div class="status-line" id="statusLine">Pick a maze and hit Solve.</div>
+
+      <div class="die-row" id="dieReadout" style="display:none;">
+        <div class="die-face top"><span class="face-label">Top</span><span class="face-value" id="readTop">1</span></div>
+        <div class="die-face"><span class="face-label">Front</span><span class="face-value" id="readFront">5</span></div>
+        <div class="die-face"><span class="face-label">Right</span><span class="face-value" id="readRight">3</span></div>
+      </div>
+
+      <div class="stats-panel" id="statsPanel" style="display:none;">
+        <div class="stats-row">
+          <div class="stat-block"><div class="stat-label">Path length</div><div class="stat-line" id="statPath">&ndash;</div></div>
+          <div class="stat-block"><div class="stat-label">Nodes expanded</div><div class="stat-line" id="statExpanded">&ndash;</div></div>
+          <div class="stat-block"><div class="stat-label">Successors generated</div><div class="stat-line" id="statSuccessors">&ndash;</div></div>
+        </div>
+        <div class="chart-wrap" id="chartWrap"></div>
+        <p class="chart-caption">Nodes expanded by each heuristic, on this maze — highlighted bar is the one you picked.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="page-footer">
+    Python implementation: A* search over (position &times; die orientation) states, comparing three custom heuristics.
+  </footer>
+</div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var themeBtn = document.getElementById('themeToggle');
+  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var currentTheme = prefersDark ? 'dark' : 'light';
+  root.setAttribute('data-theme', currentTheme);
+  themeBtn.addEventListener('click', function () {
+    currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', currentTheme);
+  });
+
+  var MAZES = {
+    maze1: { label: 'Maze 1 (2\u00d75)', rows: ["S...G", "....."] },
+    maze2: { label: 'Maze 2 (5\u00d75)', rows: ["S....", "..***", ".*..G", ".....", "*...."] },
+    maze3: { label: 'Maze 3 (5\u00d76)', rows: ["S.....", ".****.", ".*....", ".*....", ".....G"] },
+    maze4: { label: 'Maze 4 (5\u00d76)', rows: [".G*.S.", "...*..", ".*...*", "......", "...*.."] },
+    maze5: { label: 'Maze 5 (12\u00d712)', rows: ["...........S","............","............","............","....*.......","...*........","..*.........","............","....*.......","...*........","..*.........","G..........."] }
+  };
+
+  function dieRoll(die) {
+    var left = { top: die.right, right: 7 - die.top, front: die.front };
+    var right = { top: 7 - die.right, right: die.top, front: die.front };
+    var up = { top: die.front, right: die.right, front: 7 - die.top };
+    var down = { top: 7 - die.front, right: die.right, front: die.top };
+    var moves = {};
+    if (left.top !== 6) moves.left = left;
+    if (right.top !== 6) moves.right = right;
+    if (up.top !== 6) moves.up = up;
+    if (down.top !== 6) moves.down = down;
+    return moves;
+  }
+  function isPassable(maze, i, j) {
+    if (i < 0 || i >= maze.length || j < 0 || j >= maze[0].length) return false;
+    return maze[i][j] !== '*';
+  }
+  function findChar(maze, ch) {
+    for (var i = 0; i < maze.length; i++)
+      for (var j = 0; j < maze[i].length; j++)
+        if (maze[i][j] === ch) return [i, j];
+    return null;
+  }
+  function stateKey(i, j, die) { return i + ',' + j + ',' + die.top + ',' + die.front + ',' + die.right; }
+
+  function h1(i, j, goal) { var dr = Math.abs(goal[0]-i), dc = Math.abs(goal[1]-j); var c = Math.max(dr,dc), d = Math.min(dr,dc); return (d*c)/2; }
+  function h2(i, j, goal) { var dr = Math.abs(goal[0]-i), dc = Math.abs(goal[1]-j); var d = Math.min(dr,dc); return 3*d; }
+  function h3(i, j, goal) { var dr = Math.abs(goal[0]-i), dc = Math.abs(goal[1]-j); var c = Math.max(dr,dc), d = Math.min(dr,dc); return (d*d)*Math.sqrt(2) + Math.abs(c-d); }
+  var HEURISTICS = { h1: h1, h2: h2, h3: h3 };
+
+  function solve(rows, heuristicFn) {
+    var start0 = findChar(rows, 'S');
+    var goal = findChar(rows, 'G');
+    var nodesExpanded = 1;
+    var successorsGenerated = 0;
+    var startDie = { top: 1, front: 5, right: 3 };
+    var start = { i: start0[0], j: start0[1], die: startDie, g: 0, parent: null, move: null };
+    start.f = heuristicFn(start.i, start.j, goal);
+    var visited = {};
+    visited[stateKey(start.i, start.j, startDie)] = true;
+    var queue = [start];
+    while (queue.length > 0) {
+      queue.sort(function (a, b) { return a.f - b.f; });
+      var current = queue.shift();
+      nodesExpanded++;
+      if (rows[current.i][current.j] === 'G' && current.die.top === 1) {
+        return { found: true, node: current, nodesExpanded: nodesExpanded, successorsGenerated: successorsGenerated };
+      }
+      var moves = dieRoll(current.die);
+      var dirs = [['up', -1, 0], ['down', 1, 0], ['left', 0, -1], ['right', 0, 1]];
+      for (var d = 0; d < dirs.length; d++) {
+        var dir = dirs[d][0], di = dirs[d][1], dj = dirs[d][2];
+        if (!(dir in moves)) continue;
+        var ni = current.i + di, nj = current.j + dj;
+        if (!isPassable(rows, ni, nj)) continue;
+        successorsGenerated++;
+        var newDie = moves[dir];
+        var key = stateKey(ni, nj, newDie);
+        if (visited[key]) continue;
+        visited[key] = true;
+        var child = { i: ni, j: nj, die: newDie, g: current.g + 1, parent: current, move: dir };
+        child.f = current.g + heuristicFn(ni, nj, goal);
+        queue.push(child);
+      }
+    }
+    return { found: false, nodesExpanded: nodesExpanded, successorsGenerated: successorsGenerated };
+  }
+
+  function pathFromNode(node) {
+    var path = [];
+    var cur = node;
+    while (cur) { path.unshift(cur); cur = cur.parent; }
+    return path;
+  }
+
+  // ---- UI wiring ----
+  var mazeSelect = document.getElementById('mazeSelect');
+  var heuristicSelect = document.getElementById('heuristicSelect');
+  var solveBtn = document.getElementById('solveBtn');
+  var replayBtn = document.getElementById('replayBtn');
+  var mazeGrid = document.getElementById('mazeGrid');
+  var statusLine = document.getElementById('statusLine');
+  var dieReadout = document.getElementById('dieReadout');
+  var readTop = document.getElementById('readTop');
+  var readFront = document.getElementById('readFront');
+  var readRight = document.getElementById('readRight');
+  var statsPanel = document.getElementById('statsPanel');
+  var statPath = document.getElementById('statPath');
+  var statExpanded = document.getElementById('statExpanded');
+  var statSuccessors = document.getElementById('statSuccessors');
+  var chartWrap = document.getElementById('chartWrap');
+
+  Object.keys(MAZES).forEach(function (key) {
+    var opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = MAZES[key].label;
+    mazeSelect.appendChild(opt);
+  });
+
+  var cellEls = [];
+  var animTimer = null;
+  var lastPath = null;
+
+  function renderMazeStatic(rows) {
+    mazeGrid.innerHTML = '';
+    cellEls = [];
+    var cols = rows[0].length;
+    mazeGrid.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
+    mazeGrid.style.maxWidth = Math.min(480, cols * 42) + 'px';
+    for (var i = 0; i < rows.length; i++) {
+      var rowEls = [];
+      for (var j = 0; j < rows[i].length; j++) {
+        var ch = rows[i][j];
+        var cell = document.createElement('div');
+        cell.className = 'maze-cell' + (ch === '*' ? ' obstacle' : ch === 'S' ? ' start' : ch === 'G' ? ' goal' : '');
+        if (ch === 'S' || ch === 'G') cell.textContent = ch;
+        mazeGrid.appendChild(cell);
+        rowEls.push(cell);
+      }
+      cellEls.push(rowEls);
+    }
+  }
+
+  function clearAnim() {
+    if (animTimer) { clearTimeout(animTimer); animTimer = null; }
+    for (var i = 0; i < cellEls.length; i++)
+      for (var j = 0; j < cellEls[i].length; j++)
+        cellEls[i][j].classList.remove('trail', 'current');
+  }
+
+  function renderChart(results, chosenKey) {
+    chartWrap.innerHTML = '';
+    var order = ['h1', 'h2', 'h3'];
+    var labels = { h1: '(d\u00b7c)/2', h2: '3d', h3: 'd\u00b2\u221a2+|c\u2212d|' };
+    var maxVal = Math.max.apply(null, order.map(function (k) { return results[k] && results[k].found ? results[k].nodesExpanded : 0; }).concat([1]));
+    order.forEach(function (k) {
+      var col = document.createElement('div');
+      col.className = 'chart-bar-col';
+      var r = results[k];
+      var val = r && r.found ? r.nodesExpanded : 0;
+      var pct = maxVal > 0 ? Math.round((val / maxVal) * 100) : 0;
+      col.innerHTML =
+        '<div class="chart-value">' + (r && r.found ? val : '\u2014') + '</div>' +
+        '<div class="chart-bar' + (k === chosenKey ? ' selected' : '') + '" style="height:' + Math.max(pct, 3) + '%"></div>' +
+        '<div class="chart-label">H' + k.slice(1) + '<br>' + labels[k] + '</div>';
+      chartWrap.appendChild(col);
+    });
+  }
+
+  function animatePath(path) {
+    var step = 0;
+    dieReadout.style.display = 'flex';
+    function tick() {
+      if (step > 0) {
+        var prev = path[step - 1];
+        cellEls[prev.i][prev.j].classList.add('trail');
+      }
+      if (step >= path.length) {
+        statusLine.textContent = 'Solved in ' + (path.length - 1) + ' rolls.';
+        replayBtn.style.display = 'inline-block';
+        return;
+      }
+      var node = path[step];
+      for (var i = 0; i < cellEls.length; i++)
+        for (var j = 0; j < cellEls[i].length; j++)
+          cellEls[i][j].classList.remove('current');
+      cellEls[node.i][node.j].classList.add('current');
+      readTop.textContent = node.die.top;
+      readFront.textContent = node.die.front;
+      readRight.textContent = node.die.right;
+      statusLine.textContent = 'Roll ' + step + ' of ' + (path.length - 1) + (node.move ? ' \u2014 rolled ' + node.move : ' \u2014 start');
+      step++;
+      animTimer = setTimeout(tick, 420);
+    }
+    tick();
+  }
+
+  function runSolve() {
+    clearAnim();
+    var mazeKey = mazeSelect.value;
+    var heuristicKey = heuristicSelect.value;
+    var rows = MAZES[mazeKey].rows;
+    renderMazeStatic(rows);
+    dieReadout.style.display = 'none';
+    replayBtn.style.display = 'none';
+
+    var results = {};
+    Object.keys(HEURISTICS).forEach(function (k) {
+      results[k] = solve(rows, HEURISTICS[k]);
+    });
+
+    var chosen = results[heuristicKey];
+    statsPanel.style.display = 'block';
+    renderChart(results, heuristicKey);
+
+    if (!chosen.found) {
+      statusLine.textContent = 'No solution \u2014 this die can never reach the exit showing 1, no matter the route.';
+      statPath.textContent = '\u2014';
+      statExpanded.textContent = chosen.nodesExpanded.toLocaleString();
+      statSuccessors.textContent = chosen.successorsGenerated.toLocaleString();
+      lastPath = null;
+      return;
+    }
+
+    var path = pathFromNode(chosen.node);
+    lastPath = path;
+    statPath.textContent = (path.length - 1) + ' rolls';
+    statExpanded.textContent = chosen.nodesExpanded.toLocaleString();
+    statSuccessors.textContent = chosen.successorsGenerated.toLocaleString();
+    animatePath(path);
+  }
+
+  solveBtn.addEventListener('click', runSolve);
+  replayBtn.addEventListener('click', function () {
+    if (!lastPath) return;
+    clearAnim();
+    animatePath(lastPath);
+  });
+
+  renderMazeStatic(MAZES.maze1.rows);
+})();
+</script>
+
+</body>
+</html>
