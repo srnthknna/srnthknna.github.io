@@ -159,6 +159,34 @@
 
   .summary p { margin: 0; font-size: 15px; color: var(--ink); }
 
+  .game-cta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .game-cta-row p { margin: 0; font-size: 14.5px; color: var(--ink); max-width: 460px; }
+  .play-btn {
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    color: var(--paper);
+    background: var(--accent);
+    border: none;
+    border-radius: 24px;
+    padding: 9px 20px;
+    text-decoration: none;
+    white-space: nowrap;
+    box-shadow: 0 0 0 4px var(--accent-soft);
+    transition: transform 0.2s ease;
+  }
+  .play-btn:hover { transform: translateY(-2px); }
+  .play-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (max-width: 560px) {
+    .game-cta-row { flex-direction: column; align-items: flex-start; }
+  }
+
   .skills-row {
     display: grid;
     grid-template-columns: 190px 1fr;
@@ -375,6 +403,14 @@
     </div>
   </header>
 
+  <section class="game-cta reveal">
+    <h2 class="section-label"><span class="label-text">Bonus</span></h2>
+    <div class="game-cta-row">
+      <p>Think you can out-rally a software engineer? 60 seconds, real physics, no mercy.</p>
+      <a class="play-btn" href="pong.html" target="_blank" rel="noopener">Play Pong &rarr;</a>
+    </div>
+  </section>
+
   <section class="summary reveal">
     <h2 class="section-label"><span class="label-text">Professional Summary</span></h2>
     <p>Senior Software Engineer with 9+ years building and scaling distributed systems at Meta, Amazon, and Atlassian. Passionate about solving hard infrastructure problems — from cost efficiency to reliability to security — with a track record of driving multi-million dollar infrastructure savings.</p>
@@ -421,7 +457,7 @@
 
       <div class="entry" data-company="atlassian">
         <button class="entry-toggle" aria-expanded="false" aria-controls="d-atl" type="button">
-          <span class="logo-badge"><img src="data:image/png;base64,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" alt="Atlassian logo"></span>
+          <span class="logo-badge"><img src="data:image/png;base64,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" alt="Atlassian logo"></span>
           <span class="entry-head">
             <span class="entry-headrow">
               <span class="role-co"><span class="role">Senior Software Engineer</span> <span class="co">| Atlassian – Seattle, WA</span></span>

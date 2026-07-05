@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pong — vs. Srinath's Code</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FAFAF9;
+    --ink: #17191C;
+    --muted: #6B7280;
+    --rule: #E3E4E0;
+    --accent: #2F6F4E;
+    --accent-soft: #E4EFE8;
+    --card-hover: #F1F1EF;
+    --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color-scheme: light;
+  }
+  html[data-theme="dark"] {
+    --paper: #14171B;
+    --ink: #ECEDEE;
+    --muted: #98A0AC;
+    --rule: #2A2F36;
+    --accent: #4FCB8F;
+    --accent-soft: rgba(79, 203, 143, 0.14);
+    --card-hover: #1B1F25;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.35s ease, color 0.35s ease;
+  }
+  .page { max-width: 780px; margin: 0 auto; padding: 40px 20px 64px; }
+
+  .theme-toggle {
+    position: fixed; top: 22px; right: 22px; width: 40px; height: 40px; border-radius: 50%;
+    border: 1px solid var(--rule); background: var(--paper); color: var(--ink);
+    display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20;
+    transition: transform 0.25s ease, border-color 0.25s ease;
+  }
+  .theme-toggle:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .theme-toggle svg { width: 18px; height: 18px; }
+  .theme-toggle .sun { display: none; }
+  html[data-theme="dark"] .theme-toggle .moon { display: none; }
+  html[data-theme="dark"] .theme-toggle .sun { display: block; }
+
+  .back-link {
+    display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 12.5px;
+    color: var(--muted); text-decoration: none; letter-spacing: 0.03em; margin-bottom: 22px;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  header.top { text-align: center; margin-bottom: 22px; }
+  h1.title {
+    font-family: var(--mono); font-weight: 700; font-size: 22px; letter-spacing: 0.06em;
+    text-transform: uppercase; margin: 0 0 8px;
+  }
+  .sub { font-size: 13.5px; color: var(--muted); }
+  .sub kbd {
+    font-family: var(--mono); background: var(--card-hover); border: 1px solid var(--rule);
+    border-radius: 4px; padding: 1px 6px; font-size: 12px;
+  }
+
+  .scoreboard {
+    display: flex; align-items: center; justify-content: center; gap: 22px;
+    font-family: var(--mono); margin: 22px 0 14px;
+  }
+  .score-block { text-align: center; min-width: 84px; }
+  .score-label { font-size: 11px; letter-spacing: 0.14em; color: var(--muted); text-transform: uppercase; }
+  .score-value { font-size: 38px; font-weight: 700; line-height: 1.1; }
+  .score-value.you { color: var(--accent); }
+  .timer {
+    font-size: 22px; font-weight: 600; color: var(--ink); border-left: 1px solid var(--rule);
+    border-right: 1px solid var(--rule); padding: 0 22px; font-variant-numeric: tabular-nums;
+  }
+  .timer.low { color: #C24E4E; }
+
+  .court-wrap { position: relative; }
+  canvas#game {
+    display: block; width: 100%; height: auto; aspect-ratio: 700 / 420;
+    background: var(--paper); border: 1px solid var(--rule); border-radius: 12px;
+    touch-action: none;
+  }
+
+  .overlay {
+    position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 14px; text-align: center; padding: 20px;
+    background: color-mix(in srgb, var(--paper) 88%, transparent);
+    border-radius: 12px; backdrop-filter: blur(2px);
+  }
+  .overlay.hidden { display: none; }
+  .overlay h2 { font-family: var(--mono); font-size: 18px; letter-spacing: 0.04em; margin: 0; text-transform: uppercase; }
+  .overlay p { margin: 0; color: var(--muted); font-size: 14px; max-width: 420px; }
+  .overlay .result { font-size: 15px; color: var(--ink); font-weight: 600; }
+
+  .btn {
+    font-family: var(--mono); font-size: 13px; letter-spacing: 0.04em; color: var(--paper);
+    background: var(--accent); border: none; border-radius: 24px; padding: 10px 22px;
+    cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; box-shadow: 0 0 0 4px var(--accent-soft);
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .touch-controls {
+    display: none; justify-content: center; gap: 14px; margin-top: 16px;
+  }
+  .touch-controls button {
+    font-family: var(--mono); font-size: 20px; width: 64px; height: 46px; border-radius: 10px;
+    border: 1px solid var(--rule); background: var(--card-hover); color: var(--ink); cursor: pointer;
+  }
+  .touch-controls button:active { border-color: var(--accent); color: var(--accent); }
+
+  @media (max-width: 640px) {
+    .scoreboard { gap: 14px; }
+    .score-value { font-size: 30px; }
+    .timer { padding: 0 14px; font-size: 18px; }
+    .touch-controls { display: flex; }
+  }
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+  <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+</button>
+
+<div class="page">
+  <a class="back-link" href="index.html">&larr; back to resume</a>
+
+  <header class="top">
+    <h1 class="title">Beat the Engineer</h1>
+    <p class="sub">60 seconds. You vs. the CPU. <kbd>&uarr;</kbd> / <kbd>&darr;</kbd> to move — or drag on mobile.</p>
+  </header>
+
+  <div class="scoreboard">
+    <div class="score-block">
+      <div class="score-label">You</div>
+      <div class="score-value you" id="youScore">0</div>
+    </div>
+    <div class="timer" id="timer">60</div>
+    <div class="score-block">
+      <div class="score-label">CPU</div>
+      <div class="score-value" id="cpuScore">0</div>
+    </div>
+  </div>
+
+  <div class="court-wrap">
+    <canvas id="game" width="700" height="420"></canvas>
+
+    <div class="overlay" id="overlay">
+      <h2>Ready?</h2>
+      <p>Rally as long as you can. Every return picks up speed — and the angle depends on where the ball hits your paddle.</p>
+      <button class="btn" id="startBtn">Start match</button>
+    </div>
+  </div>
+
+  <div class="touch-controls">
+    <button id="touchUp" aria-label="Move paddle up">&uarr;</button>
+    <button id="touchDown" aria-label="Move paddle down">&darr;</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  /* ---- theme (mirrors resume behavior) ---- */
+  var root = document.documentElement;
+  var themeBtn = document.getElementById('themeToggle');
+  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var currentTheme = prefersDark ? 'dark' : 'light';
+  root.setAttribute('data-theme', currentTheme);
+  themeBtn.addEventListener('click', function () {
+    currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', currentTheme);
+  });
+
+  /* ---- setup ---- */
+  var canvas = document.getElementById('game');
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+
+  var PADDLE_W = 10, PADDLE_H = 78, MARGIN = 18;
+  var BALL_R = 7;
+  var BASE_SPEED = 5.2, MAX_SPEED = 11.5, SPEED_STEP = 1.06;
+  var MAX_BOUNCE_ANGLE = Math.PI / 3.3; // ~54 degrees
+  var GAME_LENGTH = 60; // seconds
+
+  var player = { y: H / 2 - PADDLE_H / 2 };
+  var cpu = { y: H / 2 - PADDLE_H / 2, targetY: H / 2 - PADDLE_H / 2, retargetAt: 0 };
+  var ball = { x: W / 2, y: H / 2, vx: 0, vy: 0, speed: BASE_SPEED };
+
+  var youScore = 0, cpuScore = 0;
+  var state = 'idle'; // idle | playing | over
+  var startTime = 0, remaining = GAME_LENGTH;
+  var keys = { up: false, down: false };
+
+  var youScoreEl = document.getElementById('youScore');
+  var cpuScoreEl = document.getElementById('cpuScore');
+  var timerEl = document.getElementById('timer');
+  var overlay = document.getElementById('overlay');
+  var startBtn = document.getElementById('startBtn');
+
+  function serve(direction) {
+    var angle = (Math.random() * 0.7 - 0.35); // small random opening angle
+    ball.speed = BASE_SPEED;
+    ball.x = W / 2;
+    ball.y = H / 2;
+    ball.vx = direction * ball.speed * Math.cos(angle);
+    ball.vy = ball.speed * Math.sin(angle);
+  }
+
+  function resetMatch() {
+    youScore = 0; cpuScore = 0;
+    player.y = H / 2 - PADDLE_H / 2;
+    cpu.y = H / 2 - PADDLE_H / 2;
+    remaining = GAME_LENGTH;
+    youScoreEl.textContent = '0';
+    cpuScoreEl.textContent = '0';
+    timerEl.textContent = String(GAME_LENGTH);
+    timerEl.classList.remove('low');
+    serve(Math.random() < 0.5 ? 1 : -1);
+  }
+
+  function startGame() {
+    resetMatch();
+    state = 'playing';
+    startTime = performance.now();
+    overlay.classList.add('hidden');
+  }
+
+  function endGame() {
+    state = 'over';
+    overlay.classList.remove('hidden');
+    var resultText;
+    if (youScore > cpuScore) resultText = 'You win ' + youScore + '–' + cpuScore + ' 🏓';
+    else if (cpuScore > youScore) resultText = 'CPU wins ' + cpuScore + '–' + youScore;
+    else resultText = 'Tied at ' + youScore + '–' + cpuScore;
+    overlay.innerHTML =
+      '<h2>Time</h2>' +
+      '<p class="result">' + resultText + '</p>' +
+      '<button class="btn" id="startBtn">Play again</button>';
+    document.getElementById('startBtn').addEventListener('click', startGame);
+  }
+
+  /* ---- input ---- */
+  window.addEventListener('keydown', function (e) {
+    if (['ArrowUp', 'ArrowDown', 'w', 's', 'W', 'S'].indexOf(e.key) !== -1) e.preventDefault();
+    if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') keys.up = true;
+    if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') keys.down = true;
+    if ((e.key === 'Enter' || e.key === ' ') && state !== 'playing') startGame();
+  });
+  window.addEventListener('keyup', function (e) {
+    if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') keys.up = false;
+    if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') keys.down = false;
+  });
+  startBtn.addEventListener('click', startGame);
+
+  function bindHold(el, onFlag) {
+    var press = function (v) { return function (e) { e.preventDefault(); onFlag(v); }; };
+    el.addEventListener('touchstart', press(true), { passive: false });
+    el.addEventListener('touchend', press(false));
+    el.addEventListener('mousedown', press(true));
+    el.addEventListener('mouseup', press(false));
+    el.addEventListener('mouseleave', press(false));
+  }
+  bindHold(document.getElementById('touchUp'), function (v) { keys.up = v; });
+  bindHold(document.getElementById('touchDown'), function (v) { keys.down = v; });
+
+  // drag directly on canvas to follow finger
+  canvas.addEventListener('touchmove', function (e) {
+    e.preventDefault();
+    var rect = canvas.getBoundingClientRect();
+    var scale = H / rect.height;
+    var y = (e.touches[0].clientY - rect.top) * scale;
+    player.y = Math.min(Math.max(y - PADDLE_H / 2, 0), H - PADDLE_H);
+  }, { passive: false });
+
+  /* ---- physics ---- */
+  function update(dt) {
+    var playerSpeed = 6.6 * dt;
+    if (keys.up) player.y -= playerSpeed;
+    if (keys.down) player.y += playerSpeed;
+    player.y = Math.min(Math.max(player.y, 0), H - PADDLE_H);
+
+    // CPU: re-targets periodically with a bit of imperfection, moves at capped speed
+    var now = performance.now();
+    if (now > cpu.retargetAt) {
+      var err = (Math.random() * 46 - 23);
+      cpu.targetY = (ball.vx > 0 ? ball.y : H / 2) - PADDLE_H / 2 + err;
+      cpu.retargetAt = now + 260;
+    }
+    var cpuSpeed = 5.1 * dt;
+    if (cpu.y < cpu.targetY) cpu.y = Math.min(cpu.y + cpuSpeed, cpu.targetY);
+    else if (cpu.y > cpu.targetY) cpu.y = Math.max(cpu.y - cpuSpeed, cpu.targetY);
+    cpu.y = Math.min(Math.max(cpu.y, 0), H - PADDLE_H);
+
+    ball.x += ball.vx * dt;
+    ball.y += ball.vy * dt;
+
+    if (ball.y - BALL_R < 0) { ball.y = BALL_R; ball.vy *= -1; }
+    if (ball.y + BALL_R > H) { ball.y = H - BALL_R; ball.vy *= -1; }
+
+    // player paddle (left)
+    if (ball.vx < 0 && ball.x - BALL_R <= MARGIN + PADDLE_W && ball.x - BALL_R >= MARGIN - 6 &&
+        ball.y >= player.y - BALL_R && ball.y <= player.y + PADDLE_H + BALL_R) {
+      var rel1 = (ball.y - (player.y + PADDLE_H / 2)) / (PADDLE_H / 2);
+      rel1 = Math.min(Math.max(rel1, -1), 1);
+      var angle1 = rel1 * MAX_BOUNCE_ANGLE;
+      ball.speed = Math.min(ball.speed * SPEED_STEP, MAX_SPEED);
+      ball.vx = Math.abs(ball.speed * Math.cos(angle1));
+      ball.vy = ball.speed * Math.sin(angle1);
+      ball.x = MARGIN + PADDLE_W + BALL_R;
+    }
+
+    // cpu paddle (right)
+    var cpuX = W - MARGIN - PADDLE_W;
+    if (ball.vx > 0 && ball.x + BALL_R >= cpuX && ball.x + BALL_R <= cpuX + PADDLE_W + 6 &&
+        ball.y >= cpu.y - BALL_R && ball.y <= cpu.y + PADDLE_H + BALL_R) {
+      var rel2 = (ball.y - (cpu.y + PADDLE_H / 2)) / (PADDLE_H / 2);
+      rel2 = Math.min(Math.max(rel2, -1), 1);
+      var angle2 = rel2 * MAX_BOUNCE_ANGLE;
+      ball.speed = Math.min(ball.speed * SPEED_STEP, MAX_SPEED);
+      ball.vx = -Math.abs(ball.speed * Math.cos(angle2));
+      ball.vy = ball.speed * Math.sin(angle2);
+      ball.x = cpuX - BALL_R;
+    }
+
+    if (ball.x < -BALL_R * 2) { cpuScore++; cpuScoreEl.textContent = cpuScore; serve(1); }
+    if (ball.x > W + BALL_R * 2) { youScore++; youScoreEl.textContent = youScore; serve(-1); }
+  }
+
+  /* ---- render ---- */
+  var accentColor, inkColor, ruleColor, mutedColor;
+  function readColors() {
+    var s = getComputedStyle(root);
+    accentColor = s.getPropertyValue('--accent').trim();
+    inkColor = s.getPropertyValue('--ink').trim();
+    ruleColor = s.getPropertyValue('--rule').trim();
+    mutedColor = s.getPropertyValue('--muted').trim();
+  }
+
+  function render() {
+    readColors();
+    ctx.clearRect(0, 0, W, H);
+
+    // center dashed line
+    ctx.strokeStyle = ruleColor;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([8, 10]);
+    ctx.beginPath();
+    ctx.moveTo(W / 2, 0);
+    ctx.lineTo(W / 2, H);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // paddles with soft accent glow
+    ctx.fillStyle = accentColor;
+    ctx.shadowColor = accentColor;
+    ctx.shadowBlur = 10;
+    ctx.fillRect(MARGIN, player.y, PADDLE_W, PADDLE_H);
+    ctx.fillRect(W - MARGIN - PADDLE_W, cpu.y, PADDLE_W, PADDLE_H);
+
+    // ball
+    ctx.fillStyle = inkColor;
+    ctx.shadowBlur = 6;
+    ctx.shadowColor = inkColor;
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, BALL_R, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // labels
+    ctx.fillStyle = mutedColor;
+    ctx.font = '11px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('YOU', MARGIN + PADDLE_W / 2, H - 8);
+    ctx.fillText('CPU', W - MARGIN - PADDLE_W / 2, H - 8);
+  }
+
+  /* ---- loop ---- */
+  var lastTime = null;
+  function loop(now) {
+    if (lastTime === null) lastTime = now;
+    var dtMs = now - lastTime;
+    lastTime = now;
+    var dt = Math.min(dtMs / 16.6667, 2.5); // normalize to ~60fps steps, cap for tab-switch spikes
+
+    if (state === 'playing') {
+      update(dt);
+      remaining = Math.max(0, GAME_LENGTH - (now - startTime) / 1000);
+      var wholeSecs = Math.ceil(remaining);
+      timerEl.textContent = String(wholeSecs);
+      timerEl.classList.toggle('low', wholeSecs <= 10);
+      if (remaining <= 0) endGame();
+    }
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  render();
+  requestAnimationFrame(loop);
+})();
+</script>
+
+</body>
+</html>
