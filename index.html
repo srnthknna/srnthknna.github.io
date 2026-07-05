@@ -159,14 +159,17 @@
 
   .summary p { margin: 0; font-size: 15px; color: var(--ink); }
 
-  .game-cta-row {
+  .project-entry { }
+  .project-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 16px;
     flex-wrap: wrap;
+    margin-bottom: 6px;
   }
-  .game-cta-row p { margin: 0; font-size: 14.5px; color: var(--ink); max-width: 460px; }
+  .project-title { font-weight: 600; font-size: 15.5px; color: var(--ink); }
+  .project-desc { margin: 0; font-size: 14.5px; color: var(--ink); max-width: 560px; }
   .play-btn {
     font-family: var(--mono);
     font-size: 13px;
@@ -184,7 +187,7 @@
   .play-btn:hover { transform: translateY(-2px); }
   .play-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   @media (max-width: 560px) {
-    .game-cta-row { flex-direction: column; align-items: flex-start; }
+    .project-head { flex-direction: column; align-items: flex-start; }
   }
 
   .skills-row {
@@ -403,14 +406,6 @@
     </div>
   </header>
 
-  <section class="game-cta reveal">
-    <h2 class="section-label"><span class="label-text">Bonus</span></h2>
-    <div class="game-cta-row">
-      <p>Think you can out-rally a software engineer? 60 seconds, real physics, no mercy.</p>
-      <a class="play-btn" href="pong.html" target="_blank" rel="noopener">Play Pong &rarr;</a>
-    </div>
-  </section>
-
   <section class="summary reveal">
     <h2 class="section-label"><span class="label-text">Professional Summary</span></h2>
     <p>Senior Software Engineer with 9+ years building and scaling distributed systems at Meta, Amazon, and Atlassian. Passionate about solving hard infrastructure problems — from cost efficiency to reliability to security — with a track record of driving multi-million dollar infrastructure savings.</p>
@@ -552,6 +547,17 @@
       <div class="year">2013</div>
     </div>
     <div class="degree">B.E. Computer Science</div>
+  </section>
+
+  <section class="projects reveal">
+    <h2 class="section-label"><span class="label-text">Projects</span></h2>
+    <div class="project-entry">
+      <div class="project-head">
+        <span class="project-title">Pong</span>
+        <a class="play-btn" href="pong.html" target="_blank" rel="noopener">Play &rarr;</a>
+      </div>
+      <p class="project-desc">A browser-based Pong clone — canvas rendering, angle-based ball physics off the paddle, and a CPU opponent with capped reaction speed. 60-second matches, live scoring.</p>
+    </div>
   </section>
 
 </div>
