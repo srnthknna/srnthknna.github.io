@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sudoku Solver — Srinath Kanna Dhandapani</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FAFAF9; --ink: #17191C; --muted: #6B7280; --rule: #E3E4E0;
+    --accent: #2F6F4E; --accent-soft: #E4EFE8; --card-hover: #F1F1EF;
+    --full: #C24E4E; --full-soft: #F7E2E2;
+    --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color-scheme: light;
+  }
+  html[data-theme="dark"] {
+    --paper: #14171B; --ink: #ECEDEE; --muted: #98A0AC; --rule: #2A2F36;
+    --accent: #4FCB8F; --accent-soft: rgba(79,203,143,0.14); --card-hover: #1B1F25;
+    --full: #E17575; --full-soft: rgba(225,117,117,0.14);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans);
+    font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+    transition: background-color 0.35s ease, color 0.35s ease;
+  }
+  .page { max-width: 760px; margin: 0 auto; padding: 40px 20px 80px; }
+
+  .theme-toggle {
+    position: fixed; top: 22px; right: 22px; width: 40px; height: 40px; border-radius: 50%;
+    border: 1px solid var(--rule); background: var(--paper); color: var(--ink);
+    display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20;
+    transition: transform 0.25s ease, border-color 0.25s ease;
+  }
+  .theme-toggle:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .theme-toggle svg { width: 18px; height: 18px; }
+  .theme-toggle .sun { display: none; }
+  html[data-theme="dark"] .theme-toggle .moon { display: none; }
+  html[data-theme="dark"] .theme-toggle .sun { display: block; }
+
+  .back-link {
+    display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 12.5px;
+    color: var(--muted); text-decoration: none; letter-spacing: 0.03em; margin-bottom: 26px;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  header.top { margin-bottom: 30px; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 8px;
+  }
+  h1.title { font-size: 24px; font-weight: 700; margin: 0 0 10px; letter-spacing: -0.01em; }
+  header.top p.dek { color: var(--muted); font-size: 15px; margin: 0; max-width: 620px; }
+
+  section { margin: 44px 0; }
+  h2.section-title {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600; margin: 0 0 16px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--rule);
+  }
+  p { margin: 0 0 12px; }
+  p:last-child { margin-bottom: 0; }
+  code { font-family: var(--mono); background: var(--card-hover); padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+
+  .code-block {
+    font-family: var(--mono); font-size: 12px; background: var(--card-hover); border: 1px solid var(--rule);
+    border-radius: 10px; padding: 14px 16px; white-space: pre; overflow-x: auto; line-height: 1.6; color: var(--ink);
+  }
+
+  .solver-wrap { border: 1px solid var(--rule); border-radius: 14px; padding: 22px 20px; background: var(--card-hover); text-align: center; }
+  .controls-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 18px; }
+  .control-select, .step-btn {
+    font-family: var(--mono); font-size: 12.5px; color: var(--ink); background: var(--paper);
+    border: 1px solid var(--rule); border-radius: 20px; padding: 8px 16px; cursor: pointer;
+  }
+  .step-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .step-btn.primary { background: var(--accent); color: var(--paper); border-color: var(--accent); }
+  .step-btn.primary:hover { opacity: 0.9; color: var(--paper); }
+  .step-btn:disabled { opacity: 0.4; cursor: default; }
+  .step-btn:focus-visible, .control-select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .board {
+    display: grid; grid-template-columns: repeat(9, 1fr); gap: 2px;
+    max-width: 340px; margin: 0 auto 18px; background: var(--rule); border: 2px solid var(--ink); padding: 2px;
+  }
+  .cell {
+    aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 15px; font-weight: 600; background: var(--paper); color: var(--ink);
+  }
+  .cell.given { color: var(--muted); }
+  .cell.placed { color: var(--accent); }
+  .cell.block-r { border-right: 2px solid var(--ink); }
+  .cell.block-b { border-bottom: 2px solid var(--ink); }
+
+  .stats-row { display: flex; justify-content: center; gap: 34px; flex-wrap: wrap; margin: 16px 0; }
+  .stat-block { text-align: center; }
+  .stat-label { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .stat-line { font-family: var(--mono); font-size: 17px; color: var(--ink); font-weight: 600; }
+  .status-line { font-family: var(--mono); font-size: 13px; color: var(--ink); min-height: 18px; margin-bottom: 4px; }
+
+  footer.page-footer {
+    margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--rule);
+    font-size: 13px; color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+  <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+</button>
+
+<div class="page">
+  <a class="back-link" href="projects.html">&larr; back to projects</a>
+
+  <header class="top">
+    <p class="eyebrow">Functional Programming — Haskell</p>
+    <h1 class="title">Sudoku Solver via Backtracking Search</h1>
+    <p class="dek">Same generic search engine as the SAT solver next door &mdash; only the moves and the goal change. Here, a "move" is placing a digit in the next empty cell (restricted to values not already used in its row, column, or box), and "done" means the whole board is filled without conflicts.</p>
+  </header>
+
+  <section>
+    <h2 class="section-title">The same ten lines</h2>
+    <p>Nothing about the search itself is Sudoku-specific. Swap out what counts as a move and what counts as finished, and the exact same recursive engine that solves boolean expressions solves a 9&times;9 grid instead.</p>
+    <div class="code-block">successors (SudokuConfig cells) = [ place digit in first empty cell | digit &lt;- validCandidates ]
+isGoal config = every cell filled, no row/column/box conflicts</div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Watch it solve</h2>
+    <div class="solver-wrap">
+      <div class="controls-row">
+        <select class="control-select" id="puzzleSelect">
+          <option value="trivial">trivial</option>
+          <option value="profi">profi</option>
+          <option value="diabolical">diabolical</option>
+          <option value="problem">problem</option>
+        </select>
+        <button class="step-btn primary" id="solveBtn">Solve</button>
+        <button class="step-btn" id="skipBtn" style="display:none;">Skip to solved</button>
+      </div>
+
+      <div class="board" id="board"></div>
+      <div class="status-line" id="statusLine">Pick a puzzle and hit Solve.</div>
+      <div class="stats-row">
+        <div class="stat-block"><div class="stat-label">Placements</div><div class="stat-line" id="statPlacements">0</div></div>
+        <div class="stat-block"><div class="stat-label">Backtracks</div><div class="stat-line" id="statBacktracks">0</div></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="page-footer">
+    Haskell implementation: the board as a flat 81-element list, with row/column/3&times;3-box membership computed per cell index to filter candidates before each placement.
+  </footer>
+</div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var themeBtn = document.getElementById('themeToggle');
+  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var currentTheme = prefersDark ? 'dark' : 'light';
+  root.setAttribute('data-theme', currentTheme);
+  themeBtn.addEventListener('click', function () {
+    currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', currentTheme);
+  });
+
+  var PUZZLES = {
+    trivial: [0,4,6,0,0,0,8,9,0, 0,7,0,4,0,9,0,1,0, 5,0,0,0,8,0,0,0,6,
+              0,0,3,9,0,8,6,0,0, 9,0,0,0,0,0,0,0,2, 0,0,8,5,0,2,1,0,0,
+              4,0,0,0,5,0,0,0,3, 0,2,0,1,0,6,0,7,0, 0,9,7,0,0,0,5,2,0],
+    profi:   [1,0,7,0,0,9,8,0,4, 0,0,3,0,4,0,0,0,0, 8,0,2,0,0,5,0,0,6,
+              0,0,0,0,8,0,3,0,0, 0,0,0,5,0,0,0,0,0, 2,3,8,0,0,0,0,1,0,
+              0,8,1,0,0,6,5,0,0, 0,2,0,0,0,4,0,0,0, 3,0,0,9,0,8,7,0,0],
+    diabolical: [8,0,0,7,0,1,0,0,2, 0,0,6,0,0,0,7,0,0, 0,1,7,0,0,0,8,9,0,
+                 0,0,0,1,7,3,0,0,0, 7,0,0,0,0,0,0,0,6, 0,0,0,9,5,6,0,0,0,
+                 0,9,5,0,0,0,4,1,0, 0,0,8,0,0,0,5,0,0, 3,0,0,6,0,5,0,0,7],
+    problem: [1,0,0,0,0,0,0,0,9, 0,5,0,0,0,0,0,2,0, 0,0,9,0,0,0,4,0,0,
+              0,0,0,5,6,7,0,0,0, 0,0,0,8,9,1,0,0,0, 0,0,0,2,3,4,0,0,0,
+              0,0,5,0,0,0,9,0,0, 0,7,0,0,0,0,0,4,0, 9,0,0,0,0,0,0,0,8]
+  };
+
+  var PEERS = [];
+  for (var idx = 0; idx < 81; idx++) {
+    var row = Math.floor(idx / 9), col = idx % 9;
+    var boxRow = Math.floor(row / 3) * 3, boxCol = Math.floor(col / 3) * 3;
+    var peers = new Set();
+    for (var c = 0; c < 9; c++) peers.add(row * 9 + c);
+    for (var r = 0; r < 9; r++) peers.add(r * 9 + col);
+    for (var rr = boxRow; rr < boxRow + 3; rr++) for (var cc = boxCol; cc < boxCol + 3; cc++) peers.add(rr * 9 + cc);
+    peers.delete(idx);
+    PEERS.push(Array.from(peers));
+  }
+
+  function candidates(board, idx) {
+    var used = new Set(PEERS[idx].map(function (p) { return board[p]; }));
+    var out = [];
+    for (var v = 1; v <= 9; v++) if (!used.has(v)) out.push(v);
+    return out;
+  }
+  function firstBlank(board) { for (var i = 0; i < 81; i++) if (board[i] === 0) return i; return -1; }
+
+  function solveWithTrace(initial) {
+    var b = initial.slice();
+    var trace = [];
+    var placements = 0, backtracks = 0;
+    function bt() {
+      var i = firstBlank(b);
+      if (i === -1) return true;
+      var cands = candidates(b, i);
+      for (var k = 0; k < cands.length; k++) {
+        b[i] = cands[k];
+        placements++;
+        trace.push({ type: 'place', idx: i, val: cands[k] });
+        if (bt()) return true;
+        b[i] = 0;
+        backtracks++;
+        trace.push({ type: 'clear', idx: i });
+      }
+      return false;
+    }
+    var solved = bt();
+    return { solved: solved, trace: trace, placements: placements, backtracks: backtracks, finalBoard: b };
+  }
+
+  // ---- UI ----
+  var puzzleSelect = document.getElementById('puzzleSelect');
+  var solveBtn = document.getElementById('solveBtn');
+  var skipBtn = document.getElementById('skipBtn');
+  var boardEl = document.getElementById('board');
+  var statusLine = document.getElementById('statusLine');
+  var statPlacements = document.getElementById('statPlacements');
+  var statBacktracks = document.getElementById('statBacktracks');
+
+  var cellEls = [];
+  var givenMask = [];
+  var animHandle = null;
+
+  function buildBoard(initial) {
+    boardEl.innerHTML = '';
+    cellEls = [];
+    givenMask = initial.map(function (v) { return v !== 0; });
+    for (var i = 0; i < 81; i++) {
+      var row = Math.floor(i / 9), col = i % 9;
+      var cell = document.createElement('div');
+      cell.className = 'cell' + (givenMask[i] ? ' given' : '') + (col === 2 || col === 5 ? ' block-r' : '') + (row === 2 || row === 5 ? ' block-b' : '');
+      cell.textContent = initial[i] === 0 ? '' : initial[i];
+      boardEl.appendChild(cell);
+      cellEls.push(cell);
+    }
+  }
+
+  function loadPuzzle() {
+    if (animHandle) { cancelAnimationFrame(animHandle); animHandle = null; }
+    skipBtn.style.display = 'none';
+    statusLine.textContent = 'Pick a puzzle and hit Solve.';
+    statPlacements.textContent = '0';
+    statBacktracks.textContent = '0';
+    buildBoard(PUZZLES[puzzleSelect.value]);
+  }
+  puzzleSelect.addEventListener('change', loadPuzzle);
+
+  function renderBoardState(board) {
+    for (var i = 0; i < 81; i++) {
+      if (givenMask[i]) continue;
+      cellEls[i].textContent = board[i] === 0 ? '' : board[i];
+      cellEls[i].classList.toggle('placed', board[i] !== 0);
+    }
+  }
+
+  function runAnimation(initial, result) {
+    var board = initial.slice();
+    var trace = result.trace;
+    var totalMs = Math.min(9000, Math.max(2500, trace.length * 2));
+    var frameMs = 16;
+    var totalFrames = Math.max(1, Math.round(totalMs / frameMs));
+    var batchSize = Math.max(1, Math.ceil(trace.length / totalFrames));
+    var pos = 0, placed = 0, backed = 0;
+
+    skipBtn.style.display = 'inline-block';
+    skipBtn.onclick = function () {
+      if (animHandle) cancelAnimationFrame(animHandle);
+      renderBoardState(result.finalBoard);
+      statPlacements.textContent = result.placements.toLocaleString();
+      statBacktracks.textContent = result.backtracks.toLocaleString();
+      statusLine.textContent = result.solved ? 'Solved.' : 'No solution found.';
+      skipBtn.style.display = 'none';
+      solveBtn.disabled = false;
+    };
+
+    function frame() {
+      var steps = 0;
+      while (steps < batchSize && pos < trace.length) {
+        var ev = trace[pos];
+        if (ev.type === 'place') { board[ev.idx] = ev.val; placed++; }
+        else { board[ev.idx] = 0; backed++; }
+        pos++; steps++;
+      }
+      renderBoardState(board);
+      statPlacements.textContent = placed.toLocaleString();
+      statBacktracks.textContent = backed.toLocaleString();
+      if (pos < trace.length) {
+        animHandle = requestAnimationFrame(frame);
+      } else {
+        statusLine.textContent = result.solved ? 'Solved.' : 'No solution found.';
+        skipBtn.style.display = 'none';
+        solveBtn.disabled = false;
+      }
+    }
+    animHandle = requestAnimationFrame(frame);
+  }
+
+  solveBtn.addEventListener('click', function () {
+    var initial = PUZZLES[puzzleSelect.value];
+    buildBoard(initial);
+    solveBtn.disabled = true;
+    statusLine.textContent = 'Solving\u2026';
+    var result = solveWithTrace(initial);
+    runAnimation(initial, result);
+  });
+
+  loadPuzzle();
+})();
+</script>
+
+</body>
+</html>

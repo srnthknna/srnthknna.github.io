@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAT Solver — Srinath Kanna Dhandapani</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FAFAF9; --ink: #17191C; --muted: #6B7280; --rule: #E3E4E0;
+    --accent: #2F6F4E; --accent-soft: #E4EFE8; --card-hover: #F1F1EF;
+    --full: #C24E4E; --full-soft: #F7E2E2;
+    --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color-scheme: light;
+  }
+  html[data-theme="dark"] {
+    --paper: #14171B; --ink: #ECEDEE; --muted: #98A0AC; --rule: #2A2F36;
+    --accent: #4FCB8F; --accent-soft: rgba(79,203,143,0.14); --card-hover: #1B1F25;
+    --full: #E17575; --full-soft: rgba(225,117,117,0.14);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans);
+    font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+    transition: background-color 0.35s ease, color 0.35s ease;
+  }
+  .page { max-width: 760px; margin: 0 auto; padding: 40px 20px 80px; }
+
+  .theme-toggle {
+    position: fixed; top: 22px; right: 22px; width: 40px; height: 40px; border-radius: 50%;
+    border: 1px solid var(--rule); background: var(--paper); color: var(--ink);
+    display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20;
+    transition: transform 0.25s ease, border-color 0.25s ease;
+  }
+  .theme-toggle:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .theme-toggle svg { width: 18px; height: 18px; }
+  .theme-toggle .sun { display: none; }
+  html[data-theme="dark"] .theme-toggle .moon { display: none; }
+  html[data-theme="dark"] .theme-toggle .sun { display: block; }
+
+  .back-link {
+    display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 12.5px;
+    color: var(--muted); text-decoration: none; letter-spacing: 0.03em; margin-bottom: 26px;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  header.top { margin-bottom: 30px; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 8px;
+  }
+  h1.title { font-size: 24px; font-weight: 700; margin: 0 0 10px; letter-spacing: -0.01em; }
+  header.top p.dek { color: var(--muted); font-size: 15px; margin: 0; max-width: 620px; }
+
+  section { margin: 44px 0; }
+  h2.section-title {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600; margin: 0 0 16px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--rule);
+  }
+  p { margin: 0 0 12px; }
+  p:last-child { margin-bottom: 0; }
+  code { font-family: var(--mono); background: var(--card-hover); padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+
+  .code-block {
+    font-family: var(--mono); font-size: 12px; background: var(--card-hover); border: 1px solid var(--rule);
+    border-radius: 10px; padding: 14px 16px; white-space: pre; overflow-x: auto; line-height: 1.6; color: var(--ink);
+  }
+  .code-block .kw { color: var(--accent); }
+
+  .solver-wrap { border: 1px solid var(--rule); border-radius: 14px; padding: 22px 20px; background: var(--card-hover); }
+  .controls-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 18px; align-items: center; }
+  .control-select, .step-btn {
+    font-family: var(--mono); font-size: 12.5px; color: var(--ink); background: var(--paper);
+    border: 1px solid var(--rule); border-radius: 20px; padding: 8px 16px; cursor: pointer;
+  }
+  .step-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .step-btn.primary { background: var(--accent); color: var(--paper); border-color: var(--accent); }
+  .step-btn.primary:hover { opacity: 0.9; color: var(--paper); }
+  .step-btn:disabled { opacity: 0.4; cursor: default; }
+  .step-btn:focus-visible, .control-select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .expr-display {
+    text-align: center; font-family: var(--mono); font-size: 15px; color: var(--ink); margin-bottom: 18px;
+  }
+
+  svg.tree-svg { width: 100%; height: auto; display: block; }
+  .tnode circle { fill: var(--paper); stroke: var(--rule); stroke-width: 1.5; transition: fill 0.25s ease, stroke 0.25s ease; }
+  .tnode.visited circle { stroke: var(--accent); }
+  .tnode.current circle { fill: var(--accent-soft); stroke: var(--accent); }
+  .tnode.success circle { fill: var(--accent); stroke: var(--accent); }
+  .tnode.fail circle { fill: var(--full-soft); stroke: var(--full); opacity: 0.7; }
+  .tedge { stroke: var(--rule); stroke-width: 1.5; fill: none; }
+  .tedge.true-branch.walked { stroke: var(--accent); stroke-width: 2; }
+  .tedge.false-branch.walked { stroke: var(--muted); stroke-width: 2; }
+  .tree-svg text { font-family: var(--mono); font-size: 9px; fill: var(--muted); }
+  .tree-svg text.leaf-mark { font-size: 12px; fill: var(--paper); font-weight: 700; }
+
+  .status-line { text-align: center; font-family: var(--mono); font-size: 13.5px; color: var(--ink); min-height: 20px; margin: 14px 0 4px; }
+  .result-box {
+    text-align: center; font-family: var(--mono); font-size: 14px; border-radius: 10px; padding: 10px 16px; margin-top: 10px;
+  }
+  .result-box.sat { background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent); }
+  .result-box.unsat { background: var(--full-soft); color: var(--full); border: 1px solid var(--full); }
+
+  footer.page-footer {
+    margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--rule);
+    font-size: 13px; color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+  <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+</button>
+
+<div class="page">
+  <a class="back-link" href="projects.html">&larr; back to projects</a>
+
+  <header class="top">
+    <p class="eyebrow">Functional Programming — Haskell</p>
+    <h1 class="title">A SAT Solver in a Few Lines of Search</h1>
+    <p class="dek">Boolean satisfiability: given an expression built from AND, OR, and NOT, is there some assignment of true/false to its variables that makes the whole thing true? This one is built on a tiny generic backtracking engine &mdash; the same one, unmodified, also solves Sudoku on the next page.</p>
+  </header>
+
+  <section>
+    <h2 class="section-title">One search engine, two problems</h2>
+    <p>The generic engine only needs to know two things about a problem: what the possible next moves are (<code>successors</code>), and how to tell when you're done (<code>isGoal</code>). Everything else &mdash; the recursion, the backtracking, the "try the next option" logic &mdash; is written once.</p>
+    <div class="code-block">solveAll isGoal c = <span class="kw">let</span> restSolutions = concat [solveAll isGoal c' | c' &lt;- successors c]
+                    <span class="kw">in</span>  <span class="kw">if</span> isGoal c <span class="kw">then</span> c:restSolutions <span class="kw">else</span> restSolutions</div>
+    <p>For SAT, a "move" is deciding the next variable's value; "done" means every variable is assigned and the expression evaluates to true.</p>
+  </section>
+
+  <section>
+    <h2 class="section-title">Watch it search</h2>
+    <div class="solver-wrap">
+      <div class="controls-row">
+        <select class="control-select" id="exprSelect"></select>
+        <button class="step-btn primary" id="searchBtn">Search</button>
+      </div>
+      <div class="expr-display" id="exprDisplay"></div>
+      <div id="treeContainer"></div>
+      <div class="status-line" id="statusLine"></div>
+      <div id="resultBox"></div>
+    </div>
+  </section>
+
+  <footer class="page-footer">
+    Haskell implementation: a <code>Config</code> typeclass (<code>successors</code> + a goal test) shared across problems, with the boolean expression as an ordinary recursive <code>BExp</code> tree evaluated by a small interpreter.
+  </footer>
+</div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var themeBtn = document.getElementById('themeToggle');
+  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var currentTheme = prefersDark ? 'dark' : 'light';
+  root.setAttribute('data-theme', currentTheme);
+  themeBtn.addEventListener('click', function () {
+    currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', currentTheme);
+  });
+
+  // ---- BExp helpers ----
+  function V(n) { return { t: 'Var', n: n }; }
+  function Not(a) { return { t: 'Not', a: a }; }
+  function And(a, b) { return { t: 'And', a: a, b: b }; }
+  function Or(a, b) { return { t: 'Or', a: a, b: b }; }
+  function Const(v) { return { t: 'Const', v: v }; }
+
+  function showExpr(e) {
+    switch (e.t) {
+      case 'And': return '(' + showExpr(e.a) + ' \u2227 ' + showExpr(e.b) + ')';
+      case 'Or': return '(' + showExpr(e.a) + ' \u2228 ' + showExpr(e.b) + ')';
+      case 'Not': return '\u00ac' + showExpr(e.a);
+      case 'Const': return e.v ? 'True' : 'False';
+      case 'Var': return e.n;
+    }
+  }
+  function findVarsRaw(e) {
+    switch (e.t) {
+      case 'And': return findVarsRaw(e.a).concat(findVarsRaw(e.b));
+      case 'Or': return findVarsRaw(e.a).concat(findVarsRaw(e.b));
+      case 'Not': return findVarsRaw(e.a);
+      case 'Const': return [];
+      case 'Var': return [e.n];
+    }
+  }
+  function nubPreserveOrder(arr) {
+    var seen = {}, out = [];
+    arr.forEach(function (x) { if (!seen[x]) { seen[x] = true; out.push(x); } });
+    return out;
+  }
+  function findVars(e) { return nubPreserveOrder(findVarsRaw(e)); }
+  function run(e, env) {
+    switch (e.t) {
+      case 'And': return run(e.a, env) && run(e.b, env);
+      case 'Or': return run(e.a, env) || run(e.b, env);
+      case 'Not': return !run(e.a, env);
+      case 'Const': return e.v;
+      case 'Var': return env[e.n] === true;
+    }
+  }
+
+  var PRESETS = [
+    { label: '(\u00aca \u2227 \u00acb) \u2228 (\u00aca \u2227 \u00acb)', expr: Or(And(Not(V('a')), Not(V('b'))), And(Not(V('a')), Not(V('b')))) },
+    { label: '(\u00aca \u2227 \u00acb) \u2228 (\u00acc \u2228 \u00acd)', expr: Or(And(Not(V('a')), Not(V('b'))), Or(Not(V('c')), Not(V('d')))) },
+    { label: '(\u00acc \u2227 \u00aca) \u2227 (\u00acc \u2228 \u00acc)', expr: And(And(Not(V('c')), Not(V('a'))), Or(Not(V('c')), Not(V('c')))) },
+    { label: '\u00ac\u00ac(\u00aca \u2227 \u00aca)', expr: Not(Not(And(Not(V('a')), Not(V('a'))))) },
+    { label: 'False \u2227 a  (unsatisfiable)', expr: And(Const(false), V('a')) }
+  ];
+
+  var exprSelect = document.getElementById('exprSelect');
+  var searchBtn = document.getElementById('searchBtn');
+  var exprDisplay = document.getElementById('exprDisplay');
+  var treeContainer = document.getElementById('treeContainer');
+  var statusLine = document.getElementById('statusLine');
+  var resultBox = document.getElementById('resultBox');
+
+  PRESETS.forEach(function (p, i) {
+    var opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = p.label;
+    exprSelect.appendChild(opt);
+  });
+
+  function currentExpr() { return PRESETS[parseInt(exprSelect.value, 10)].expr; }
+
+  function updateExprDisplay() {
+    exprDisplay.textContent = showExpr(currentExpr());
+    treeContainer.innerHTML = '';
+    statusLine.textContent = '';
+    resultBox.innerHTML = '';
+  }
+  exprSelect.addEventListener('change', updateExprDisplay);
+
+  // ---- build full binary tree layout for n variables ----
+  function buildTreeNodes(n) {
+    // node id: path string of 'T'/'F' chars, root = ''
+    var nodes = {};
+    function rec(path, depth) {
+      nodes[path] = { path: path, depth: depth, isLeaf: depth === n };
+      if (depth < n) { rec(path + 'T', depth + 1); rec(path + 'F', depth + 1); }
+    }
+    rec('', 0);
+    return nodes;
+  }
+
+  function layoutTree(nodes, n, W) {
+    // x position by leaf order (for leaves), internal = midpoint of children
+    var leafOrder = [];
+    Object.keys(nodes).filter(function (k) { return nodes[k].isLeaf; }).sort().forEach(function (k) { leafOrder.push(k); });
+    var leafCount = Math.pow(2, n);
+    var marginX = 30;
+    var usableW = W - marginX * 2;
+    leafOrder.forEach(function (path, i) {
+      nodes[path].x = marginX + (leafCount > 1 ? (i + 0.5) * (usableW / leafCount) : usableW / 2);
+    });
+    // internal nodes: x = avg of children, computed bottom-up
+    for (var d = n - 1; d >= 0; d--) {
+      Object.keys(nodes).filter(function (k) { return nodes[k].depth === d; }).forEach(function (k) {
+        var cx = (nodes[k + 'T'].x + nodes[k + 'F'].x) / 2;
+        nodes[k].x = cx;
+      });
+    }
+    var rowH = n > 0 ? (220 - 40) / n : 0;
+    Object.keys(nodes).forEach(function (k) { nodes[k].y = 30 + nodes[k].depth * rowH; });
+    return nodes;
+  }
+
+  function renderTreeSVG(nodes, n, vars) {
+    var W = 640, H = 250;
+    var els = '';
+    // edges first
+    Object.keys(nodes).forEach(function (k) {
+      var node = nodes[k];
+      if (!node.isLeaf) {
+        ['T', 'F'].forEach(function (branch) {
+          var child = nodes[k + branch];
+          els += '<line class="tedge ' + (branch === 'T' ? 'true-branch' : 'false-branch') + '" id="edge-' + k + branch + '" x1="' + node.x + '" y1="' + node.y + '" x2="' + child.x + '" y2="' + child.y + '"></line>';
+        });
+      }
+    });
+    // level labels (variable name assigned at this depth)
+    for (var d = 0; d < n; d++) {
+      var anyAtDepth = Object.keys(nodes).filter(function (k) { return nodes[k].depth === d; })[0];
+      els += '<text x="8" y="' + (nodes[anyAtDepth].y + (220/n)/2) + '">' + vars[d] + '</text>';
+    }
+    // nodes on top
+    Object.keys(nodes).forEach(function (k) {
+      var node = nodes[k];
+      var r = node.isLeaf ? 8 : 6;
+      els += '<g class="tnode" id="node-' + k + '"><circle cx="' + node.x + '" cy="' + node.y + '" r="' + r + '"></circle></g>';
+    });
+    return '<svg class="tree-svg" viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">' + els + '</svg>';
+  }
+
+  function sleep(ms) { return new Promise(function (res) { setTimeout(res, ms); }); }
+
+  async function runSearch() {
+    searchBtn.disabled = true;
+    var expr = currentExpr();
+    var vars = findVars(expr);
+    var n = vars.length;
+    var nodes = layoutTree(buildTreeNodes(n), n, 640);
+    treeContainer.innerHTML = renderTreeSVG(nodes, n, vars);
+    statusLine.textContent = 'Searching\u2026';
+    resultBox.innerHTML = '';
+
+    var found = null;
+
+    async function dfs(path, env) {
+      var nodeEl = document.getElementById('node-' + path);
+      nodeEl.classList.add('current');
+      await sleep(180);
+      if (path.length === n) {
+        var ok = run(expr, env);
+        nodeEl.classList.remove('current');
+        nodeEl.classList.add(ok ? 'success' : 'fail');
+        if (ok) found = Object.assign({}, env);
+        return ok;
+      }
+      var varName = vars[path.length];
+      for (var i = 0; i < 2 && found === null; i++) {
+        var branch = i === 0 ? 'T' : 'F';
+        var edge = document.getElementById('edge-' + path + branch);
+        edge.classList.add('walked');
+        var env2 = Object.assign({}, env);
+        env2[varName] = branch === 'T';
+        var childOk = await dfs(path + branch, env2);
+        if (childOk) { nodeEl.classList.remove('current'); nodeEl.classList.add('success'); return true; }
+      }
+      if (found === null) { nodeEl.classList.remove('current'); nodeEl.classList.add('fail'); }
+      return false;
+    }
+
+    if (n === 0) {
+      var ok0 = run(expr, {});
+      statusLine.textContent = 'No variables to assign.';
+      resultBox.innerHTML = '<div class="result-box ' + (ok0 ? 'sat' : 'unsat') + '">' + (ok0 ? 'Satisfiable (vacuously).' : 'Unsatisfiable.') + '</div>';
+      searchBtn.disabled = false;
+      return;
+    }
+
+    await dfs('', {});
+
+    if (found) {
+      var assignment = vars.map(function (v) { return v + '=' + (found[v] ? 'True' : 'False'); }).join(', ');
+      statusLine.textContent = 'Found a satisfying assignment.';
+      resultBox.innerHTML = '<div class="result-box sat">Satisfiable: ' + assignment + '</div>';
+    } else {
+      statusLine.textContent = 'Explored every assignment.';
+      resultBox.innerHTML = '<div class="result-box unsat">Unsatisfiable &mdash; no assignment of ' + vars.join(', ') + ' makes this true.</div>';
+    }
+    searchBtn.disabled = false;
+  }
+
+  searchBtn.addEventListener('click', runSearch);
+  updateExprDisplay();
+})();
+</script>
+
+</body>
+</html>

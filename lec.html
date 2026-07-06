@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linear Equation Cracker — Srinath Kanna Dhandapani</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FAFAF9; --ink: #17191C; --muted: #6B7280; --rule: #E3E4E0;
+    --accent: #2F6F4E; --accent-soft: #E4EFE8; --card-hover: #F1F1EF;
+    --warn: #B98900; --warn-soft: #FBF1D9;
+    --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color-scheme: light;
+  }
+  html[data-theme="dark"] {
+    --paper: #14171B; --ink: #ECEDEE; --muted: #98A0AC; --rule: #2A2F36;
+    --accent: #4FCB8F; --accent-soft: rgba(79,203,143,0.14); --card-hover: #1B1F25;
+    --warn: #E8C15A; --warn-soft: rgba(232,193,90,0.14);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans);
+    font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+    transition: background-color 0.35s ease, color 0.35s ease;
+  }
+  .page { max-width: 760px; margin: 0 auto; padding: 40px 20px 80px; }
+
+  .theme-toggle {
+    position: fixed; top: 22px; right: 22px; width: 40px; height: 40px; border-radius: 50%;
+    border: 1px solid var(--rule); background: var(--paper); color: var(--ink);
+    display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20;
+    transition: transform 0.25s ease, border-color 0.25s ease;
+  }
+  .theme-toggle:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .theme-toggle svg { width: 18px; height: 18px; }
+  .theme-toggle .sun { display: none; }
+  html[data-theme="dark"] .theme-toggle .moon { display: none; }
+  html[data-theme="dark"] .theme-toggle .sun { display: block; }
+
+  .back-link {
+    display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 12.5px;
+    color: var(--muted); text-decoration: none; letter-spacing: 0.03em; margin-bottom: 26px;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  header.top { margin-bottom: 30px; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 8px;
+  }
+  h1.title { font-size: 24px; font-weight: 700; margin: 0 0 10px; letter-spacing: -0.01em; }
+  header.top p.dek { color: var(--muted); font-size: 15px; margin: 0; max-width: 620px; }
+
+  section { margin: 44px 0; }
+  h2.section-title {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600; margin: 0 0 16px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--rule);
+  }
+  p { margin: 0 0 12px; }
+  p:last-child { margin-bottom: 0; }
+  code { font-family: var(--mono); background: var(--card-hover); padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+
+  .solver-wrap { border: 1px solid var(--rule); border-radius: 14px; padding: 22px 20px; background: var(--card-hover); }
+  .controls-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 18px; }
+  .control-select, .step-btn {
+    font-family: var(--mono); font-size: 12.5px; color: var(--ink); background: var(--paper);
+    border: 1px solid var(--rule); border-radius: 20px; padding: 8px 16px; cursor: pointer;
+  }
+  .step-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .step-btn.primary { background: var(--accent); color: var(--paper); border-color: var(--accent); }
+  .step-btn.primary:hover { opacity: 0.9; color: var(--paper); }
+  .step-btn:disabled { opacity: 0.4; cursor: default; }
+  .step-btn:focus-visible, .control-select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .matrix-input {
+    display: grid; gap: 6px; justify-content: center; margin: 0 auto 18px; width: fit-content;
+  }
+  .matrix-input input {
+    width: 54px; text-align: center; font-family: var(--mono); font-size: 13px;
+    border: 1px solid var(--rule); border-radius: 6px; padding: 6px 2px; background: var(--paper); color: var(--ink);
+  }
+  .matrix-input input.rhs { border-left: 2px solid var(--accent); }
+
+  .matrix-view { display: flex; justify-content: center; margin: 20px 0; }
+  table.matrix-table { border-collapse: collapse; font-family: var(--mono); font-size: 14px; }
+  table.matrix-table td {
+    padding: 8px 12px; text-align: right; border: 1px solid var(--rule); background: var(--paper); min-width: 44px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  table.matrix-table td.rhs-col { border-left: 2px solid var(--ink); }
+  table.matrix-table tr.pivot-row td { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  table.matrix-table tr.target-row td { background: var(--warn-soft); color: var(--warn); font-weight: 600; }
+
+  .step-caption { font-size: 14px; color: var(--ink); min-height: 44px; text-align: center; margin: 14px 2px; }
+  .step-caption .step-num { font-family: var(--mono); color: var(--accent); font-weight: 600; margin-right: 4px; }
+  .step-controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 6px; }
+  .step-dots { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; max-width: 200px; }
+  .step-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--rule); border: none; cursor: pointer; padding: 0; }
+  .step-dot.active { background: var(--accent); }
+
+  .solution-row { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-top: 18px; }
+  .solution-chip {
+    font-family: var(--mono); font-size: 15px; border: 1px solid var(--accent); background: var(--accent-soft);
+    color: var(--accent); border-radius: 10px; padding: 8px 16px; font-weight: 600;
+  }
+
+  .convert-example { display: flex; align-items: center; gap: 14px; justify-content: center; flex-wrap: wrap; margin: 16px 0; }
+  .convert-box {
+    font-family: var(--mono); font-size: 12.5px; border: 1px solid var(--rule); border-radius: 8px;
+    padding: 10px 14px; background: var(--card-hover); text-align: center;
+  }
+  .convert-arrow { color: var(--muted); font-size: 16px; }
+
+  footer.page-footer {
+    margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--rule);
+    font-size: 13px; color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+  <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+</button>
+
+<div class="page">
+  <a class="back-link" href="projects.html">&larr; back to projects</a>
+
+  <header class="top">
+    <p class="eyebrow">Functional Programming — Haskell</p>
+    <h1 class="title">Linear Equation Cracker</h1>
+    <p class="dek">Solves systems of linear equations by Gaussian elimination: reduce the system to triangular form, then back-substitute from the last equation up. A separate symbolic layer can also take equations written out in ordinary algebraic form and convert them into matrix rows automatically.</p>
+  </header>
+
+  <section>
+    <h2 class="section-title">Solve a system</h2>
+    <div class="solver-wrap">
+      <div class="controls-row">
+        <select class="control-select" id="sizeSelect">
+          <option value="3">3 equations, 3 unknowns</option>
+          <option value="4">4 equations, 4 unknowns</option>
+        </select>
+        <button class="step-btn" id="loadExampleBtn">Load example</button>
+        <button class="step-btn primary" id="solveBtn">Solve</button>
+      </div>
+
+      <div class="matrix-input" id="matrixInput"></div>
+
+      <div class="matrix-view" id="matrixView"></div>
+      <div class="step-caption" id="stepCaption"></div>
+      <div class="step-controls" id="stepControlsWrap" style="display:none;">
+        <button class="step-btn" id="prevBtn">&larr; Back</button>
+        <div class="step-dots" id="stepDots"></div>
+        <button class="step-btn primary" id="nextBtn">Next &rarr;</button>
+      </div>
+      <div class="solution-row" id="solutionRow"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">From equations to a matrix</h2>
+    <p>The solver also accepts equations written symbolically &mdash; it builds a small polynomial normal form internally, reads off each variable's coefficient, and assembles the matrix row itself.</p>
+    <div class="convert-example">
+      <div class="convert-box">2x&nbsp;+&nbsp;3z&nbsp;+&nbsp;3y&nbsp;=&nbsp;8<br>&minus;2z&nbsp;+&nbsp;3y&nbsp;+&nbsp;2x&nbsp;=&nbsp;3<br>&minus;2y&nbsp;+&nbsp;4x&nbsp;+&nbsp;2z&nbsp;=&nbsp;4</div>
+      <span class="convert-arrow">&rarr;</span>
+      <div class="convert-box">[2,&nbsp;3,&nbsp;3,&nbsp;8]<br>[2,&nbsp;3,&nbsp;-2,&nbsp;3]<br>[4,&nbsp;-2,&nbsp;2,&nbsp;4]</div>
+    </div>
+    <p>Same system, same answer &mdash; just written the way a person would write it rather than the way the solver needs it.</p>
+  </section>
+
+  <footer class="page-footer">
+    Haskell implementation: row-reduction over <code>Double</code>s via list recursion, plus a small multivariate-polynomial normal form (<code>MPoly</code>) used to read off coefficients from symbolic equations.
+  </footer>
+</div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var themeBtn = document.getElementById('themeToggle');
+  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var currentTheme = prefersDark ? 'dark' : 'light';
+  root.setAttribute('data-theme', currentTheme);
+  themeBtn.addEventListener('click', function () {
+    currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', currentTheme);
+  });
+
+  var EXAMPLES = {
+    3: [[2,3,3,8],[2,3,-2,3],[4,-2,2,4]],
+    4: [[1,2,-3,4,12],[2,2,-2,3,10],[0,1,1,0,-1],[1,-1,1,-2,-4]]
+  };
+
+  var sizeSelect = document.getElementById('sizeSelect');
+  var loadExampleBtn = document.getElementById('loadExampleBtn');
+  var solveBtn = document.getElementById('solveBtn');
+  var matrixInputEl = document.getElementById('matrixInput');
+  var matrixViewEl = document.getElementById('matrixView');
+  var stepCaption = document.getElementById('stepCaption');
+  var stepControlsWrap = document.getElementById('stepControlsWrap');
+  var prevBtn = document.getElementById('prevBtn');
+  var nextBtn = document.getElementById('nextBtn');
+  var stepDots = document.getElementById('stepDots');
+  var solutionRow = document.getElementById('solutionRow');
+
+  function buildInputGrid(n) {
+    matrixInputEl.innerHTML = '';
+    matrixInputEl.style.gridTemplateColumns = 'repeat(' + (n + 1) + ', auto)';
+    var example = EXAMPLES[n];
+    for (var r = 0; r < n; r++) {
+      for (var c = 0; c <= n; c++) {
+        var inp = document.createElement('input');
+        inp.type = 'text';
+        inp.inputMode = 'decimal';
+        inp.id = 'cell-' + r + '-' + c;
+        inp.value = example[r][c];
+        if (c === n) inp.className = 'rhs';
+        matrixInputEl.appendChild(inp);
+      }
+    }
+  }
+
+  function readMatrix(n) {
+    var m = [];
+    for (var r = 0; r < n; r++) {
+      var row = [];
+      for (var c = 0; c <= n; c++) {
+        row.push(parseFloat(document.getElementById('cell-' + r + '-' + c).value));
+      }
+      m.push(row);
+    }
+    return m;
+  }
+
+  sizeSelect.addEventListener('change', function () { buildInputGrid(parseInt(sizeSelect.value, 10)); resetSteps(); });
+  loadExampleBtn.addEventListener('click', function () { buildInputGrid(parseInt(sizeSelect.value, 10)); resetSteps(); });
+
+  function fmt(v) {
+    var r = Math.round(v * 1000) / 1000;
+    return (Object.is(r, -0) ? 0 : r).toString();
+  }
+
+  function renderMatrix(m, pivotIdx, targetIdx) {
+    var n = m.length;
+    var html = '<table class="matrix-table"><tbody>';
+    for (var r = 0; r < n; r++) {
+      var cls = r === pivotIdx ? ' class="pivot-row"' : r === targetIdx ? ' class="target-row"' : '';
+      html += '<tr' + cls + '>';
+      for (var c = 0; c <= n; c++) {
+        html += '<td' + (c === n ? ' class="rhs-col"' : '') + '>' + fmt(m[r][c]) + '</td>';
+      }
+      html += '</tr>';
+    }
+    html += '</tbody></table>';
+    matrixViewEl.innerHTML = html;
+  }
+
+  // ---- Gaussian elimination with step capture ----
+  function solveWithSteps(matrix) {
+    var m = matrix.map(function (r) { return r.slice(); });
+    var n = m.length;
+    var steps = [{ matrix: m.map(function(r){return r.slice();}), caption: 'Starting system, augmented with the right-hand side.' }];
+
+    for (var col = 0; col < n; col++) {
+      var pivotRow = -1;
+      for (var r = col; r < n; r++) { if (Math.abs(m[r][col]) > 1e-9) { pivotRow = r; break; } }
+      if (pivotRow === -1) { steps.push({ matrix: m.map(function(r){return r.slice();}), caption: 'No unique solution &mdash; this column has no nonzero pivot.' }); return { steps: steps, solvable: false }; }
+      if (pivotRow !== col) {
+        var tmp = m[col]; m[col] = m[pivotRow]; m[pivotRow] = tmp;
+        steps.push({ matrix: m.map(function(r){return r.slice();}), pivot: col, caption: 'Swapped rows so row ' + (col+1) + ' has a nonzero leading entry.' });
+      }
+      for (var r2 = col + 1; r2 < n; r2++) {
+        if (Math.abs(m[r2][col]) < 1e-12) continue;
+        var factor = m[r2][col] / m[col][col];
+        for (var c = col; c <= n; c++) m[r2][c] = m[r2][c] - factor * m[col][c];
+        steps.push({
+          matrix: m.map(function (r) { return r.slice(); }),
+          pivot: col, target: r2,
+          caption: 'Row ' + (r2 + 1) + ' &larr; Row ' + (r2 + 1) + ' &minus; ' + fmt(factor) + ' &times; Row ' + (col + 1) + ' &mdash; eliminates column ' + (col + 1) + ' from row ' + (r2 + 1) + '.'
+        });
+      }
+    }
+    steps.push({ matrix: m.map(function(r){return r.slice();}), caption: 'Triangular form reached. Now back-substitute, starting from the last row.' });
+
+    // back substitution
+    var x = new Array(n).fill(0);
+    for (var i = n - 1; i >= 0; i--) {
+      var row = m[i];
+      var sum = row[n];
+      var parts = [];
+      for (var j = i + 1; j < n; j++) { sum -= row[j] * x[j]; if (Math.abs(row[j]) > 1e-12) parts.push(fmt(row[j]) + '&times;x' + (j+1)); }
+      x[i] = sum / row[i];
+      var capt = 'x' + (i + 1) + ' = (' + fmt(row[n]) + (parts.length ? ' &minus; (' + parts.join(' + ') + ')' : '') + ') / ' + fmt(row[i]) + ' = <strong>' + fmt(x[i]) + '</strong>';
+      steps.push({ matrix: m.map(function(r){return r.slice();}), backsub: i, solvedSoFar: x.slice(), caption: capt });
+    }
+    return { steps: steps, solvable: true, solution: x };
+  }
+
+  var currentSteps = [];
+  var currentStepIdx = 0;
+
+  function resetSteps() {
+    currentSteps = [];
+    currentStepIdx = 0;
+    stepControlsWrap.style.display = 'none';
+    stepCaption.textContent = '';
+    solutionRow.innerHTML = '';
+    var n = parseInt(sizeSelect.value, 10);
+    renderMatrix(EXAMPLES[n].map(function(r){return r.map(function(v){return v;});}), -1, -1);
+  }
+
+  function renderStep() {
+    var s = currentSteps[currentStepIdx];
+    renderMatrix(s.matrix, s.pivot === undefined ? -1 : s.pivot, s.target === undefined ? -1 : s.target);
+    stepCaption.innerHTML = '<span class="step-num">' + (currentStepIdx + 1) + ' / ' + currentSteps.length + '</span>' + s.caption;
+    prevBtn.disabled = currentStepIdx === 0;
+    nextBtn.disabled = currentStepIdx === currentSteps.length - 1;
+
+    stepDots.innerHTML = '';
+    currentSteps.forEach(function (_, i) {
+      var dot = document.createElement('button');
+      dot.className = 'step-dot' + (i === currentStepIdx ? ' active' : '');
+      dot.addEventListener('click', function () { currentStepIdx = i; renderStep(); });
+      stepDots.appendChild(dot);
+    });
+
+    if (currentStepIdx === currentSteps.length - 1 && s.solvedSoFar) {
+      var n = s.matrix.length;
+      var full = new Array(n).fill(null);
+      s.solvedSoFar.forEach(function (v, i) { full[i] = v; });
+      // walk back through steps to fill any not-yet-known (shouldn't happen on last step)
+      solutionRow.innerHTML = full.map(function (v, i) {
+        return '<div class="solution-chip">x' + (i + 1) + ' = ' + fmt(v) + '</div>';
+      }).join('');
+    } else {
+      solutionRow.innerHTML = '';
+    }
+  }
+
+  prevBtn.addEventListener('click', function () { if (currentStepIdx > 0) { currentStepIdx--; renderStep(); } });
+  nextBtn.addEventListener('click', function () { if (currentStepIdx < currentSteps.length - 1) { currentStepIdx++; renderStep(); } });
+
+  solveBtn.addEventListener('click', function () {
+    var n = parseInt(sizeSelect.value, 10);
+    var matrix = readMatrix(n);
+    var result = solveWithSteps(matrix);
+    currentSteps = result.steps;
+    currentStepIdx = 0;
+    stepControlsWrap.style.display = 'flex';
+    renderStep();
+  });
+
+  buildInputGrid(3);
+  resetSteps();
+})();
+</script>
+
+</body>
+</html>
