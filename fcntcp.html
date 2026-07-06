@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcntcp — Srinath Kanna Dhandapani</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FAFAF9; --ink: #17191C; --muted: #6B7280; --rule: #E3E4E0;
+    --accent: #2F6F4E; --accent-soft: #E4EFE8; --card-hover: #F1F1EF;
+    --full: #C24E4E; --full-soft: #F7E2E2;
+    --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color-scheme: light;
+  }
+  html[data-theme="dark"] {
+    --paper: #14171B; --ink: #ECEDEE; --muted: #98A0AC; --rule: #2A2F36;
+    --accent: #4FCB8F; --accent-soft: rgba(79,203,143,0.14); --card-hover: #1B1F25;
+    --full: #E17575; --full-soft: rgba(225,117,117,0.14);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans);
+    font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+    transition: background-color 0.35s ease, color 0.35s ease;
+  }
+  .page { max-width: 760px; margin: 0 auto; padding: 40px 20px 80px; }
+
+  .theme-toggle {
+    position: fixed; top: 22px; right: 22px; width: 40px; height: 40px; border-radius: 50%;
+    border: 1px solid var(--rule); background: var(--paper); color: var(--ink);
+    display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20;
+    transition: transform 0.25s ease, border-color 0.25s ease;
+  }
+  .theme-toggle:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .theme-toggle svg { width: 18px; height: 18px; }
+  .theme-toggle .sun { display: none; }
+  html[data-theme="dark"] .theme-toggle .moon { display: none; }
+  html[data-theme="dark"] .theme-toggle .sun { display: block; }
+
+  .back-link {
+    display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 12.5px;
+    color: var(--muted); text-decoration: none; letter-spacing: 0.03em; margin-bottom: 26px;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  header.top { margin-bottom: 30px; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 8px;
+  }
+  h1.title { font-size: 24px; font-weight: 700; margin: 0 0 10px; letter-spacing: -0.01em; }
+  header.top p.dek { color: var(--muted); font-size: 15px; margin: 0; max-width: 620px; }
+
+  section { margin: 44px 0; }
+  h2.section-title {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600; margin: 0 0 16px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--rule);
+  }
+  p { margin: 0 0 12px; }
+  p:last-child { margin-bottom: 0; }
+  code { font-family: var(--mono); background: var(--card-hover); padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+
+  .field-block { margin-bottom: 18px; }
+  .field-block-label { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+  .field-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .field-chip {
+    font-family: var(--mono); font-size: 11.5px; border: 1px solid var(--rule); border-radius: 8px;
+    padding: 8px 12px; background: var(--card-hover); text-align: center; flex: 1; min-width: 90px;
+  }
+  .field-chip.wide { flex-basis: 100%; }
+  .field-chip .fname { display: block; font-weight: 700; color: var(--accent); }
+
+  .proof-line {
+    font-family: var(--mono); font-size: 12.5px; color: var(--accent); text-align: center;
+    border: 1px dashed var(--accent); border-radius: 10px; padding: 10px 14px; margin-top: 16px;
+  }
+
+  /* ---- window concept mini-diagram ---- */
+  .window-demo { display: flex; flex-direction: column; gap: 12px; margin: 18px 0 4px; }
+  .window-demo-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .window-demo-label { font-family: var(--mono); font-size: 12px; color: var(--muted); min-width: 92px; }
+  .packet-icons { display: flex; gap: 5px; }
+  .packet-icon {
+    width: 24px; height: 24px; border-radius: 6px; background: var(--accent); color: var(--paper);
+    font-family: var(--mono); font-size: 10.5px; display: flex; align-items: center; justify-content: center;
+    flex: none;
+  }
+  .wait-tag {
+    font-family: var(--mono); font-size: 11px; color: var(--muted); border: 1px dashed var(--rule);
+    border-radius: 12px; padding: 4px 10px; white-space: nowrap;
+  }
+
+  /* ---- charts ---- */
+  .chart-card { border: 1px solid var(--rule); border-radius: 14px; padding: 20px 18px; background: var(--card-hover); }
+  svg.wchart { width: 100%; height: auto; display: block; overflow: visible; }
+  .wchart .axis-line { stroke: var(--rule); stroke-width: 1; }
+  .wchart .grid-line { stroke: var(--rule); stroke-width: 1; stroke-dasharray: 2 4; }
+  .wchart .threshold-line { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 3; }
+  .wchart .trace-path { stroke: var(--accent); stroke-width: 2; fill: none; }
+  .wchart .trace-dot { fill: var(--accent); }
+  .wchart .trace-dot.loss { fill: var(--full); }
+  .wchart .annotation-line { stroke: var(--full); stroke-width: 1; }
+  .wchart text { font-family: var(--mono); font-size: 9.5px; fill: var(--muted); }
+  .wchart .phase-label { font-size: 10px; fill: var(--muted); letter-spacing: 0.02em; }
+  .wchart .axis-title { font-size: 10.5px; fill: var(--muted); letter-spacing: 0.04em; }
+  .wchart .annotation-label { font-size: 10px; fill: var(--full); font-weight: 600; }
+  .chart-caption { font-size: 12.5px; color: var(--muted); margin-top: 12px; text-align: center; }
+
+  /* ---- simulator ---- */
+  .sim-controls { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 18px 0; }
+  .step-btn {
+    font-family: var(--mono); font-size: 12.5px; color: var(--ink); background: var(--paper);
+    border: 1px solid var(--rule); border-radius: 20px; padding: 8px 16px; cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+  }
+  .step-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .step-btn.danger:hover { border-color: var(--full); color: var(--full); }
+  .step-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .stats-row { display: flex; justify-content: center; gap: 34px; flex-wrap: wrap; margin: 16px 0; }
+  .stat-block { text-align: center; }
+  .stat-label { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .stat-line { font-family: var(--mono); font-size: 17px; color: var(--ink); font-weight: 600; }
+
+  .sim-note { font-size: 12.5px; color: var(--muted); text-align: center; margin: 0 0 4px; }
+  .event-log {
+    max-height: 168px; overflow-y: auto; border: 1px solid var(--rule); border-radius: 8px;
+    padding: 4px 12px; margin-top: 14px; background: var(--paper); text-align: left;
+  }
+  .event-line {
+    font-family: var(--mono); font-size: 11.5px; color: var(--ink); padding: 6px 0;
+    border-bottom: 1px solid var(--rule); display: flex; gap: 8px;
+  }
+  .event-line:last-child { border-bottom: none; }
+  .event-line.loss { color: var(--full); }
+  .event-line .event-round { color: var(--muted); flex: none; width: 46px; }
+
+  footer.page-footer {
+    margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--rule);
+    font-size: 13px; color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+  <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+</button>
+
+<div class="page">
+  <a class="back-link" href="index.html">&larr; back to resume</a>
+
+  <header class="top">
+    <p class="eyebrow">RIT Coursework — Foundations of Computer Networks</p>
+    <h1 class="title">fcntcp: TCP's Congestion Control, Rebuilt on UDP</h1>
+    <p class="dek">UDP delivers packets with no ordering, no retries, and no guarantee they arrive at all. This project builds reliability on top of it from scratch — its own packet format, checksums, sequence numbers, and a sliding window that behaves like TCP Tahoe: slow start, congestion avoidance, and recovery from both dropped acknowledgments and timeouts.</p>
+  </header>
+
+  <section>
+    <h2 class="section-title">The packet formats</h2>
+    <div class="field-block">
+      <div class="field-block-label">Data packet (~800 bytes on the wire)</div>
+      <div class="field-row">
+        <div class="field-chip"><span class="fname">Client IP</span></div>
+        <div class="field-chip"><span class="fname">Server IP</span></div>
+        <div class="field-chip"><span class="fname">Client Port</span></div>
+        <div class="field-chip"><span class="fname">Server Port</span></div>
+        <div class="field-chip"><span class="fname">Seq. Number</span></div>
+        <div class="field-chip"><span class="fname">Checksum</span></div>
+        <div class="field-chip"><span class="fname"># of Packets</span></div>
+        <div class="field-chip"><span class="fname">File Size</span></div>
+        <div class="field-chip wide"><span class="fname">Data (500 bytes)</span></div>
+      </div>
+    </div>
+    <div class="field-block">
+      <div class="field-block-label">Acknowledgment packet</div>
+      <div class="field-row">
+        <div class="field-chip"><span class="fname">Next Required Seq. #</span></div>
+        <div class="field-chip"><span class="fname">End Bit</span></div>
+        <div class="field-chip"><span class="fname">Optional Data</span></div>
+      </div>
+    </div>
+    <p>Because every data packet already carries both endpoints' addresses, ports, sequence number, and the total packet count, the very first packet to arrive doubles as the handshake — no separate connection-setup exchange needed. When the server has every packet, it sends back a plain string, <code>"done"</code>, and both sides independently checksum the file to confirm it arrived byte-for-byte.</p>
+  </section>
+
+  <section>
+    <h2 class="section-title">What "window size" means here</h2>
+    <p>The window is how many packets the sender fires off before it has to stop and wait for an acknowledgment. A bigger window means more data in flight at once &mdash; higher throughput, but more to lose if something goes wrong.</p>
+    <div class="window-demo">
+      <div class="window-demo-row">
+        <span class="window-demo-label">Window = 2</span>
+        <div class="packet-icons"><div class="packet-icon">1</div><div class="packet-icon">2</div></div>
+        <span class="wait-tag">then wait for an ack before sending more</span>
+      </div>
+      <div class="window-demo-row">
+        <span class="window-demo-label">Window = 8</span>
+        <div class="packet-icons"><div class="packet-icon">1</div><div class="packet-icon">2</div><div class="packet-icon">3</div><div class="packet-icon">4</div><div class="packet-icon">5</div><div class="packet-icon">6</div><div class="packet-icon">7</div><div class="packet-icon">8</div></div>
+        <span class="wait-tag">then wait</span>
+      </div>
+    </div>
+    <p>Every time an acknowledgment comes back cleanly, the window either doubles (still in "slow start") or grows by one (once past the threshold, in "congestion avoidance"). Every time something looks wrong &mdash; three duplicate acks, or no ack at all before the timeout &mdash; the window is slashed back down to 1 and the threshold is halved, so the next climb is more cautious.</p>
+  </section>
+
+  <section>
+    <h2 class="section-title">A real transfer, replayed</h2>
+    <p>This is the actual congestion window from a real run of this program &mdash; a 2.96&nbsp;MB file, sent as 5,928 packets over UDP. Each point is one acknowledgment cycle; every value below comes straight from that transfer's console log, not a simulation.</p>
+    <div class="chart-card">
+      <div id="realChart"></div>
+      <p class="chart-caption">Dashed line marks the slow-start threshold (128 packets). The window doubles each cycle up to that point, then grows by only 1 per cycle afterward &mdash; until a timeout on the very last outstanding packet drops it straight back to 1.</p>
+    </div>
+    <p class="proof-line">Client and server independently computed the same result: 2,963,706 bytes, CRC32 <code>ca71963d</code> &mdash; on both ends, from a file sent entirely over "unreliable" UDP.</p>
+  </section>
+
+  <section>
+    <h2 class="section-title">Build your own trace</h2>
+    <p>Same three rules the real protocol uses. Click through some successful rounds, then trigger a loss and watch the window collapse and climb back &mdash; the classic TCP Tahoe sawtooth.</p>
+    <div class="chart-card">
+      <div id="simChart"></div>
+      <div class="stats-row">
+        <div class="stat-block"><div class="stat-label">Round</div><div class="stat-line" id="simRound">0</div></div>
+        <div class="stat-block"><div class="stat-label">Window</div><div class="stat-line" id="simWindow">1</div></div>
+        <div class="stat-block"><div class="stat-label">Threshold</div><div class="stat-line" id="simThreshold">128</div></div>
+      </div>
+      <div class="sim-controls">
+        <button class="step-btn" id="ackBtn">Send round (ACK)</button>
+        <button class="step-btn danger" id="tripleBtn">3 duplicate ACKs</button>
+        <button class="step-btn danger" id="timeoutBtn">Timeout</button>
+        <button class="step-btn" id="resetBtn">Reset</button>
+      </div>
+      <p class="sim-note">Note: in this protocol, both loss signals trigger the identical recovery &mdash; window to 1, threshold halved. The two buttons will always move the chart the same way; it's the real-world cause that differs, not the response.</p>
+      <div class="event-log" id="eventLog"></div>
+    </div>
+  </section>
+
+  <footer class="page-footer">
+    Java implementation: UDP <code>DatagramSocket</code>s with Java object serialization for packets, CRC32 checksums, and separate sender / receiver / timer threads coordinating through shared, synchronized state.
+  </footer>
+</div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var themeBtn = document.getElementById('themeToggle');
+  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var currentTheme = prefersDark ? 'dark' : 'light';
+  root.setAttribute('data-theme', currentTheme);
+  themeBtn.addEventListener('click', function () {
+    currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', currentTheme);
+    renderReal();
+    renderSim();
+  });
+
+  // Real window-size events extracted directly from an actual client-side
+  // console log of this program transferring a 2.96MB file (5,928 packets).
+  var REAL_TRACE = [1,2,2,4,4,8,8,16,16,32,32,64,64,128,128,129,129,130,130,131,131,132,132,133,133,134,134,
+    135,135,136,136,137,137,138,138,139,139,140,140,141,141,142,142,143,143,144,144,145,145,146,146,147,147,
+    148,148,149,149,150,150,151,151,152,152,1];
+  var REAL_THRESHOLD = 128;
+
+  function buildChart(container, data, threshold, opts) {
+    opts = opts || {};
+    var W = 640, H = 250, padL = 40, padR = 16, padT = 30, padB = 30;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+    var maxY = Math.max(threshold, Math.max.apply(null, data)) * 1.15;
+    var n = data.length;
+    var stepX = n > 1 ? plotW / (n - 1) : plotW;
+
+    function xAt(i) { return padL + i * stepX; }
+    function yAt(v) { return padT + plotH - (v / maxY) * plotH; }
+
+    var path = '';
+    data.forEach(function (v, i) {
+      path += (i === 0 ? 'M' : 'L') + xAt(i).toFixed(1) + ',' + yAt(v).toFixed(1) + ' ';
+    });
+
+    var dots = data.map(function (v, i) {
+      var isLoss = i > 0 && v < data[i - 1] && v <= 1;
+      return '<circle class="trace-dot' + (isLoss ? ' loss' : '') + '" cx="' + xAt(i).toFixed(1) + '" cy="' + yAt(v).toFixed(1) + '" r="' + (isLoss ? 3.2 : 2) + '"></circle>';
+    }).join('');
+
+    // y gridlines: 0, threshold, and the rounded max
+    var yTickVals = [0, threshold, Math.round(maxY / 10) * 10];
+    var yTickEls = yTickVals.map(function (v) {
+      var y = yAt(v).toFixed(1);
+      var cls = v === threshold ? 'threshold-line' : 'grid-line';
+      return '<line class="' + cls + '" x1="' + padL + '" y1="' + y + '" x2="' + (padL + plotW) + '" y2="' + y + '"></line>' +
+        '<text x="' + (padL - 6) + '" y="' + (parseFloat(y) + 3) + '" text-anchor="end">' + v + '</text>';
+    }).join('');
+
+    var xTicks = '';
+    var tickEvery = Math.max(1, Math.round(n / 8));
+    for (var i = 0; i < n; i += tickEvery) {
+      xTicks += '<text x="' + xAt(i).toFixed(1) + '" y="' + (padT + plotH + 16) + '" text-anchor="middle">' + i + '</text>';
+    }
+
+    var phaseLabels = '';
+    if (opts.phases) {
+      opts.phases.forEach(function (p) {
+        var midX = (xAt(p.fromIdx) + xAt(p.toIdx)) / 2;
+        phaseLabels += '<line class="axis-line" x1="' + xAt(p.fromIdx).toFixed(1) + '" y1="' + (padT - 6) + '" x2="' + xAt(p.toIdx).toFixed(1) + '" y2="' + (padT - 6) + '"></line>';
+        phaseLabels += '<text class="phase-label" x="' + midX.toFixed(1) + '" y="' + (padT - 11) + '" text-anchor="middle">' + p.label + '</text>';
+      });
+    }
+
+    var annotation = '';
+    if (opts.annotateLastLabel) {
+      var lastIdx = n - 1;
+      var lx = xAt(lastIdx), ly = yAt(data[lastIdx]);
+      var labelX = Math.max(padL + 55, lx - 70);
+      var labelY = Math.max(padT + 14, ly - 24);
+      annotation = '<line class="annotation-line" x1="' + lx.toFixed(1) + '" y1="' + ly.toFixed(1) + '" x2="' + labelX.toFixed(1) + '" y2="' + (labelY + 4).toFixed(1) + '"></line>' +
+        '<text class="annotation-label" x="' + labelX.toFixed(1) + '" y="' + labelY.toFixed(1) + '" text-anchor="middle">' + opts.annotateLastLabel + '</text>';
+    }
+
+    var axisTitles = '';
+    if (opts.xAxisTitle) {
+      axisTitles += '<text class="axis-title" x="' + (padL + plotW / 2) + '" y="' + (H - 2) + '" text-anchor="middle">' + opts.xAxisTitle + '</text>';
+    }
+    if (opts.yAxisTitle) {
+      axisTitles += '<text class="axis-title" x="12" y="' + (padT - 14) + '">' + opts.yAxisTitle + '</text>';
+    }
+
+    var svg =
+      '<svg class="wchart" viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">' +
+      yTickEls +
+      '<line class="axis-line" x1="' + padL + '" y1="' + padT + '" x2="' + padL + '" y2="' + (padT + plotH) + '"></line>' +
+      '<line class="axis-line" x1="' + padL + '" y1="' + (padT + plotH) + '" x2="' + (padL + plotW) + '" y2="' + (padT + plotH) + '"></line>' +
+      xTicks + phaseLabels +
+      '<path class="trace-path" d="' + path.trim() + '"></path>' +
+      dots + annotation + axisTitles +
+      '</svg>';
+    container.innerHTML = svg;
+  }
+
+  function renderReal() {
+    var slowStartEnd = REAL_TRACE.findIndex(function (v) { return v >= REAL_THRESHOLD; });
+    buildChart(document.getElementById('realChart'), REAL_TRACE, REAL_THRESHOLD, {
+      xAxisTitle: 'Transmission round (one per acknowledgment) \u2192',
+      yAxisTitle: 'Window size (packets in flight)',
+      phases: [
+        { fromIdx: 0, toIdx: slowStartEnd, label: 'slow start \u2014 doubles each round' },
+        { fromIdx: slowStartEnd, toIdx: REAL_TRACE.length - 2, label: 'congestion avoidance \u2014 +1 per round' }
+      ],
+      annotateLastLabel: 'timeout \u2192 window resets to 1'
+    });
+  }
+  renderReal();
+
+  // ---- interactive simulator ----
+  var simState = { window: 1, threshold: 128, round: 0, history: [1] };
+  var simEvents = [];
+  var simRoundEl = document.getElementById('simRound');
+  var simWindowEl = document.getElementById('simWindow');
+  var simThresholdEl = document.getElementById('simThreshold');
+  var eventLogEl = document.getElementById('eventLog');
+
+  function renderSim() {
+    var lastLoss = simState.history.length > 1 &&
+      simState.history[simState.history.length - 1] === 1 &&
+      simState.history[simState.history.length - 2] !== 1;
+    buildChart(document.getElementById('simChart'), simState.history, simState.threshold, {
+      xAxisTitle: 'Round \u2192',
+      yAxisTitle: 'Window size',
+      annotateLastLabel: lastLoss ? 'window \u2192 1' : null
+    });
+    simRoundEl.textContent = simState.round;
+    simWindowEl.textContent = simState.window;
+    simThresholdEl.textContent = simState.threshold;
+
+    eventLogEl.innerHTML = simEvents.slice().reverse().map(function (e) {
+      return '<div class="event-line' + (e.loss ? ' loss' : '') + '"><span class="event-round">Round ' + e.round + '</span><span>' + e.text + '</span></div>';
+    }).join('') || '<div class="event-line"><span>No rounds yet \u2014 try "Send round (ACK)".</span></div>';
+    eventLogEl.scrollTop = 0;
+  }
+
+  function ack() {
+    var before = simState.window, beforeThresh = simState.threshold;
+    var doubled = simState.window * 2 <= simState.threshold;
+    if (doubled) {
+      simState.window = simState.window * 2;
+    } else {
+      simState.window = simState.window + 1;
+      simState.threshold = simState.threshold + 1;
+    }
+    simState.round++;
+    simState.history.push(simState.window);
+    simEvents.push({
+      round: simState.round, loss: false,
+      text: '\u2713 ACK \u2014 window ' + before + ' \u2192 ' + simState.window + (doubled ? ' (doubling)' : ' (+1, threshold \u2192 ' + simState.threshold + ')')
+    });
+    renderSim();
+  }
+  function loss(cause) {
+    var before = simState.window, beforeThresh = simState.threshold;
+    simState.threshold = simState.threshold <= 1 ? 1 : Math.floor(simState.threshold / 2);
+    simState.window = 1;
+    simState.round++;
+    simState.history.push(simState.window);
+    simEvents.push({
+      round: simState.round, loss: true,
+      text: '\u2717 ' + cause + ' \u2014 window ' + before + ' \u2192 1, threshold ' + beforeThresh + ' \u2192 ' + simState.threshold
+    });
+    renderSim();
+  }
+  function reset() {
+    simState = { window: 1, threshold: 128, round: 0, history: [1] };
+    simEvents = [];
+    renderSim();
+  }
+
+  document.getElementById('ackBtn').addEventListener('click', ack);
+  document.getElementById('tripleBtn').addEventListener('click', function () { loss('3 duplicate ACKs'); });
+  document.getElementById('timeoutBtn').addEventListener('click', function () { loss('Timeout'); });
+  document.getElementById('resetBtn').addEventListener('click', reset);
+
+  renderSim();
+})();
+</script>
+
+</body>
+</html>

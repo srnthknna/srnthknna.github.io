@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>tsapp — Srinath Kanna Dhandapani</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FAFAF9; --ink: #17191C; --muted: #6B7280; --rule: #E3E4E0;
+    --accent: #2F6F4E; --accent-soft: #E4EFE8; --card-hover: #F1F1EF;
+    --full: #C24E4E; --full-soft: #F7E2E2;
+    --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color-scheme: light;
+  }
+  html[data-theme="dark"] {
+    --paper: #14171B; --ink: #ECEDEE; --muted: #98A0AC; --rule: #2A2F36;
+    --accent: #4FCB8F; --accent-soft: rgba(79,203,143,0.14); --card-hover: #1B1F25;
+    --full: #E17575; --full-soft: rgba(225,117,117,0.14);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans);
+    font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+    transition: background-color 0.35s ease, color 0.35s ease;
+  }
+  .page { max-width: 760px; margin: 0 auto; padding: 40px 20px 80px; }
+
+  .theme-toggle {
+    position: fixed; top: 22px; right: 22px; width: 40px; height: 40px; border-radius: 50%;
+    border: 1px solid var(--rule); background: var(--paper); color: var(--ink);
+    display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20;
+    transition: transform 0.25s ease, border-color 0.25s ease;
+  }
+  .theme-toggle:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .theme-toggle svg { width: 18px; height: 18px; }
+  .theme-toggle .sun { display: none; }
+  html[data-theme="dark"] .theme-toggle .moon { display: none; }
+  html[data-theme="dark"] .theme-toggle .sun { display: block; }
+
+  .back-link {
+    display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 12.5px;
+    color: var(--muted); text-decoration: none; letter-spacing: 0.03em; margin-bottom: 26px;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  header.top { margin-bottom: 30px; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 8px;
+  }
+  h1.title { font-size: 24px; font-weight: 700; margin: 0 0 10px; letter-spacing: -0.01em; }
+  header.top p.dek { color: var(--muted); font-size: 15px; margin: 0; max-width: 620px; }
+
+  section { margin: 44px 0; }
+  h2.section-title {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600; margin: 0 0 16px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--rule);
+  }
+  p { margin: 0 0 12px; }
+  p:last-child { margin-bottom: 0; }
+
+  .field-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0; justify-content: center; }
+  .field-chip {
+    font-family: var(--mono); font-size: 12px; border: 1px solid var(--rule); border-radius: 8px;
+    padding: 8px 12px; background: var(--card-hover); text-align: center;
+  }
+  .field-chip .fname { display: block; font-weight: 700; color: var(--accent); margin-bottom: 3px; }
+  .field-chip .fdesc { color: var(--muted); font-size: 11px; }
+
+  /* ---- chain diagram (shared visual language with the pipeline on the GVN-PRE page) ---- */
+  .chain { display: flex; flex-wrap: wrap; align-items: stretch; justify-content: center; margin-bottom: 18px; }
+  .chain-node { text-align: center; padding: 4px; }
+  .chain-node .node-box {
+    font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--ink);
+    border: 1.5px solid var(--rule); border-radius: 10px; padding: 12px 14px; background: var(--card-hover);
+    min-width: 84px; transition: border-color 0.25s ease, background-color 0.25s ease, color 0.25s ease;
+  }
+  .chain-node .node-ip { display: block; font-size: 10px; color: var(--muted); margin-top: 4px; font-weight: 400; }
+  .chain-node.active .node-box { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+  .chain-arrow { display: flex; align-items: center; color: var(--rule); font-size: 16px; padding: 0 4px; }
+  @media (max-width: 560px) {
+    .chain { flex-direction: column; align-items: center; }
+    .chain-arrow { transform: rotate(90deg); padding: 4px 0; }
+  }
+
+  /* ---- controls ---- */
+  .solver-wrap { border: 1px solid var(--rule); border-radius: 14px; padding: 22px 20px; background: var(--card-hover); }
+  .controls-grid { display: flex; gap: 22px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; }
+  .control-group { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .control-label { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .segmented { display: flex; border: 1px solid var(--rule); border-radius: 20px; overflow: hidden; }
+  .segmented button {
+    font-family: var(--mono); font-size: 12px; padding: 7px 14px; border: none; background: var(--paper);
+    color: var(--ink); cursor: pointer; border-right: 1px solid var(--rule);
+  }
+  .segmented button:last-child { border-right: none; }
+  .segmented button.active { background: var(--accent); color: var(--paper); }
+  .control-select {
+    font-family: var(--mono); font-size: 12.5px; color: var(--ink); background: var(--paper);
+    border: 1px solid var(--rule); border-radius: 20px; padding: 8px 14px; cursor: pointer;
+  }
+
+  .creds-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 18px; }
+  .creds-row input {
+    font-family: var(--mono); font-size: 12.5px; border: 1px solid var(--rule); border-radius: 8px;
+    padding: 7px 10px; background: var(--paper); color: var(--ink); width: 110px;
+  }
+  .creds-hint { font-size: 12px; color: var(--muted); text-align: center; margin-bottom: 16px; }
+
+  .send-btn {
+    display: block; margin: 0 auto 22px; font-family: var(--mono); font-size: 13px; color: var(--paper);
+    background: var(--accent); border: none; border-radius: 24px; padding: 10px 24px; cursor: pointer;
+    box-shadow: 0 0 0 4px var(--accent-soft); transition: transform 0.2s ease;
+  }
+  .send-btn:hover:not(:disabled) { transform: translateY(-2px); }
+  .send-btn:disabled { opacity: 0.5; cursor: default; }
+  .send-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .trace-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; min-height: 34px; margin: 16px 0; }
+  .trace-chip {
+    font-family: var(--mono); font-size: 11px; border: 1px solid var(--accent); background: var(--accent-soft);
+    color: var(--accent); border-radius: 16px; padding: 6px 12px; opacity: 0; transform: translateY(4px);
+    animation: chipIn 0.3s ease forwards;
+  }
+  @keyframes chipIn { to { opacity: 1; transform: translateY(0); } }
+
+  .status-line { text-align: center; font-family: var(--mono); font-size: 13px; color: var(--ink); min-height: 18px; margin-bottom: 4px; }
+
+  .terminal {
+    font-family: var(--mono); font-size: 12.5px; background: var(--paper); border: 1px solid var(--rule);
+    border-radius: 10px; padding: 16px 18px; white-space: pre; overflow-x: auto; color: var(--ink);
+    line-height: 1.7; display: none;
+  }
+  .terminal .dim { color: var(--muted); }
+  .terminal .good { color: var(--accent); }
+  .terminal .bad { color: var(--full); }
+
+  footer.page-footer {
+    margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--rule);
+    font-size: 13px; color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+  <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+</button>
+
+<div class="page">
+  <a class="back-link" href="index.html">&larr; back to resume</a>
+
+  <header class="top">
+    <p class="eyebrow">RIT Coursework — Foundations of Computer Networks</p>
+    <h1 class="title">tsapp: A Chained Time-Service Protocol</h1>
+    <p class="dek">One Java program plays three roles — client, server, or proxy — for a simple time-sync protocol built on raw TCP and UDP sockets. A client can talk straight to the server, or through a chain of proxies. Every proxy the reply passes through stamps on the address it just heard back from and how long that took, so by the time it reaches the client, the message carries its own built-in traceroute.</p>
+  </header>
+
+  <section>
+    <h2 class="section-title">The message format</h2>
+    <p>Every request is a handful of fields packed into one string, delimited by a custom marker. What's included depends on what the client is asking for.</p>
+    <div class="field-row">
+      <div class="field-chip"><span class="fname">REQ</span><span class="fdesc">0=UTC time<br>1=epoch time<br>2=set time</span></div>
+      <div class="field-chip"><span class="fname">TYP</span><span class="fdesc">t = TCP<br>u = UDP</span></div>
+      <div class="field-chip"><span class="fname">USER / PASS</span><span class="fdesc">only for REQ 2</span></div>
+      <div class="field-chip"><span class="fname">TIME</span><span class="fdesc">epoch value<br>to set</span></div>
+    </div>
+    <p>The reply works the same way in reverse: the server's answer gets one segment added per proxy hop on the way back, each holding a next-hop address and a round-trip time — read together, they reconstruct the path the message took.</p>
+  </section>
+
+  <section>
+    <h2 class="section-title">Send a request</h2>
+    <div class="solver-wrap">
+      <div class="controls-grid">
+        <div class="control-group">
+          <span class="control-label">Proxies</span>
+          <div class="segmented" id="proxyCountSeg">
+            <button data-val="0">0</button>
+            <button data-val="1" class="active">1</button>
+            <button data-val="2">2</button>
+          </div>
+        </div>
+        <div class="control-group">
+          <span class="control-label">Transport</span>
+          <div class="segmented" id="protocolSeg">
+            <button data-val="udp" class="active">UDP</button>
+            <button data-val="tcp">TCP</button>
+          </div>
+        </div>
+        <div class="control-group">
+          <span class="control-label">Request</span>
+          <select class="control-select" id="reqSelect">
+            <option value="0">Get time (UTC)</option>
+            <option value="1">Get time (epoch)</option>
+            <option value="2">Set time (epoch)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="creds-row" id="credsRow" style="display:none;">
+        <input type="text" id="userInput" placeholder="username" value="usr">
+        <input type="text" id="passInput" placeholder="password" value="pw">
+        <input type="text" id="timeInput" placeholder="epoch time" value="99">
+      </div>
+      <p class="creds-hint" id="credsHint" style="display:none;">Try <code>usr</code> / <code>pw</code> for a valid login &mdash; anything else triggers the server's "Invalid User" response.</p>
+
+      <div class="chain" id="chain"></div>
+
+      <button class="send-btn" id="sendBtn">Send request</button>
+
+      <div class="status-line" id="statusLine"></div>
+      <div class="trace-row" id="traceRow"></div>
+      <pre class="terminal" id="terminal"></pre>
+    </div>
+  </section>
+
+  <footer class="page-footer">
+    Java implementation: raw <code>java.net</code> TCP and UDP sockets, one binary for all three roles (client / server / proxy), threaded server and proxy loops.
+  </footer>
+</div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var themeBtn = document.getElementById('themeToggle');
+  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var currentTheme = prefersDark ? 'dark' : 'light';
+  root.setAttribute('data-theme', currentTheme);
+  themeBtn.addEventListener('click', function () {
+    currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', currentTheme);
+  });
+
+  var proxyCount = 1;
+  var protocol = 'udp';
+
+  var proxyCountSeg = document.getElementById('proxyCountSeg');
+  var protocolSeg = document.getElementById('protocolSeg');
+  var reqSelect = document.getElementById('reqSelect');
+  var credsRow = document.getElementById('credsRow');
+  var credsHint = document.getElementById('credsHint');
+  var chainEl = document.getElementById('chain');
+  var sendBtn = document.getElementById('sendBtn');
+  var statusLine = document.getElementById('statusLine');
+  var traceRow = document.getElementById('traceRow');
+  var terminal = document.getElementById('terminal');
+
+  function bindSegmented(seg, onChange) {
+    var btns = seg.querySelectorAll('button');
+    btns.forEach(function (b) {
+      b.addEventListener('click', function () {
+        btns.forEach(function (x) { x.classList.remove('active'); });
+        b.classList.add('active');
+        onChange(b.getAttribute('data-val'));
+      });
+    });
+  }
+  bindSegmented(proxyCountSeg, function (v) { proxyCount = parseInt(v, 10); renderChain(); });
+  bindSegmented(protocolSeg, function (v) { protocol = v; });
+
+  reqSelect.addEventListener('change', function () {
+    var isSet = reqSelect.value === '2';
+    credsRow.style.display = isSet ? 'flex' : 'none';
+    credsHint.style.display = isSet ? 'block' : 'none';
+  });
+
+  function nodeList() {
+    var nodes = [{ name: 'Client', ip: null }];
+    for (var i = 1; i <= proxyCount; i++) {
+      nodes.push({ name: 'Proxy ' + i, ip: '10.0.' + i + '.1' });
+    }
+    nodes.push({ name: 'Server', ip: '10.0.9.1' });
+    return nodes;
+  }
+
+  function renderChain() {
+    var nodes = nodeList();
+    chainEl.innerHTML = '';
+    nodes.forEach(function (n, idx) {
+      var wrap = document.createElement('div');
+      wrap.className = 'chain-node';
+      wrap.id = 'node-' + idx;
+      wrap.innerHTML = '<div class="node-box">' + n.name + (n.ip ? '<span class="node-ip">' + n.ip + '</span>' : '') + '</div>';
+      chainEl.appendChild(wrap);
+      if (idx < nodes.length - 1) {
+        var arrow = document.createElement('div');
+        arrow.className = 'chain-arrow';
+        arrow.textContent = '\u2194';
+        chainEl.appendChild(arrow);
+      }
+    });
+  }
+
+  function clearActive() {
+    document.querySelectorAll('.chain-node').forEach(function (el) { el.classList.remove('active'); });
+  }
+
+  function sleep(ms) { return new Promise(function (res) { setTimeout(res, ms); }); }
+
+  function randRtt() { return Math.floor(15 + Math.random() * 105); }
+
+  function serverResponse() {
+    var req = reqSelect.value;
+    if (req === '0') {
+      return { ok: true, text: new Date(0).toISOString().replace('.000Z', 'Z') };
+    }
+    if (req === '1') {
+      return { ok: true, text: '0' };
+    }
+    // req === '2', set time
+    var user = document.getElementById('userInput').value;
+    var pass = document.getElementById('passInput').value;
+    var time = document.getElementById('timeInput').value;
+    if (user === 'usr' && pass === 'pw') {
+      return { ok: true, text: 'Valid User: Data set on the server is' + time };
+    }
+    return { ok: false, text: 'Invalid User:' };
+  }
+
+  async function sendRequest() {
+    sendBtn.disabled = true;
+    terminal.style.display = 'none';
+    traceRow.innerHTML = '';
+    clearActive();
+
+    var nodes = nodeList();
+    var last = nodes.length - 1;
+
+    statusLine.textContent = 'Sending request over ' + protocol.toUpperCase() + '\u2026';
+    for (var i = 0; i <= last; i++) {
+      clearActive();
+      document.getElementById('node-' + i).classList.add('active');
+      await sleep(280);
+    }
+
+    var resp = serverResponse();
+    statusLine.textContent = 'Server responded \u2014 relaying back\u2026';
+    await sleep(200);
+
+    var hops = [];
+    for (var j = last - 1; j >= 1; j--) {
+      clearActive();
+      document.getElementById('node-' + j).classList.add('active');
+      var downstream = nodes[j + 1];
+      var rtt = randRtt();
+      hops.push({ ip: downstream.ip, rtt: rtt });
+      var chip = document.createElement('span');
+      chip.className = 'trace-chip';
+      chip.textContent = downstream.ip + ' \u00b7 ' + rtt + 'ms';
+      traceRow.appendChild(chip);
+      await sleep(320);
+    }
+    clearActive();
+    document.getElementById('node-0').classList.add('active');
+    await sleep(200);
+    clearActive();
+
+    var totalRtt = hops.reduce(function (s, h) { return s + h.rtt; }, 0) + Math.floor(5 + Math.random() * 15);
+
+    var lines = [];
+    lines.push('Message received from server is ' + (resp.ok ? resp.text : resp.text));
+    if (hops.length > 0) {
+      lines.push('');
+      lines.push('S.NO\tIP Address\tTime Taken');
+      lines.push('-----------------------------------');
+      hops.forEach(function (h, idx) {
+        lines.push((idx + 1) + '\t' + h.ip + '\t' + h.rtt);
+      });
+    }
+    lines.push('');
+    lines.push('Total RTT is : ' + totalRtt);
+
+    terminal.textContent = lines.join('\n');
+    terminal.style.display = 'block';
+    statusLine.textContent = resp.ok ? 'Done.' : 'Done \u2014 server rejected the credentials.';
+    sendBtn.disabled = false;
+  }
+
+  sendBtn.addEventListener('click', sendRequest);
+
+  renderChain();
+})();
+</script>
+
+</body>
+</html>
